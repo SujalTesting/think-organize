@@ -39,11 +39,21 @@ Current import validates that the JSON is an object with a `done` array, then no
 ## Stage gates
 
 - Stage 0: baseline and data contract documented; feature branch created.
-- Stage 1: add Supabase client and Google sign-in/session UI, with no cloud data writes yet.
+- Stage 1: Supabase client and Google sign-in/session UI added on the feature branch; cloud data writes are intentionally not enabled. Runtime/build verification still required after installing dependencies and configuring Supabase.
 - Stage 2: create schema and verify RLS isolation for separate users.
 - Stage 3: introduce a repository layer and move signed-in persistence to the cloud.
 - Stage 4: implement an explicit, validated, retry-safe local-to-cloud migration.
 - Stage 5: regression and deployment verification.
+
+## Stage 1 implementation added
+
+- Added `@supabase/supabase-js` to `package.json`.
+- Added `src/lib/supabase.ts`, using `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` (or the legacy anon-key variable).
+- Added `src/auth/AuthContext.tsx` for session restoration, auth-state updates, Google OAuth initiation, and sign-out.
+- Added `src/auth/AuthBar.tsx` and `src/auth/auth.css` for account status and sign-in/out UI.
+- Mounted the provider and auth bar from `src/main.tsx`.
+- Added `.env.example` with placeholders only; no secrets are committed.
+- The UI explicitly says cloud sync is not enabled yet while signed in. Learning data continues to use localStorage at this stage.
 
 ## Stage 0 observations / risks
 
