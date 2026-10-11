@@ -55,3 +55,11 @@
 .auth-settings-menu button{display:block;width:100%;padding:10px 11px;text-align:left;border:0;border-radius:7px;background:transparent;color:#344b37;font:600 12px "DM Sans",system-ui,sans-serif;cursor:pointer}
 .auth-settings-menu button:hover{background:#f1f4ed}
 .auth-settings-menu button:disabled{opacity:.6;cursor:wait}
+
+
+/* Refined, solid account settings control */
+.auth-settings-button{width:40px;height:40px;padding:9px;border:1px solid #d8ded4;border-radius:8px;background:#344b37;color:#fff;box-shadow:none}
+.auth-settings-button:hover{background:#263b29;border-color:#263b29}
+.auth-settings-button svg{width:20px;height:20px;stroke:currentColor;stroke-width:2}
+.auth-settings-menu{border-radius:8px;box-shadow:0 8px 22px rgba(20,32,20,.14)}
+.auth-settings-menu button{border-radius:5px}
