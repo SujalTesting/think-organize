@@ -98,7 +98,7 @@ export default function AuthBar() {
       <p className="account-subtitle">{isProfileComplete ? "Keep your profile information up to date." : "Please complete every required field before entering your learning workspace."}</p>
       <form onSubmit={submit} className="account-form">
         <label>Email address<input value={user.email || ""} readOnly /></label>
-        <ProfileFields fields={fields === emptyFields ? fromProfile(profile, nameFromGoogle) : fields} update={update} age={ageFromDob((fields === emptyFields ? fromProfile(profile, nameFromGoogle) : fields).date_of_birth)} includeBio={isProfileComplete} />
+        <ProfileFields fields={fields === emptyFields ? fromProfile(profile, nameFromGoogle) : fields} update={update} age={ageFromDob((fields === emptyFields ? fromProfile(profile, nameFromGoogle) : fields).date_of_birth)} includeUsername={!isProfileComplete} includeBio={isProfileComplete} />
         {errorMessage && <p className="account-error" role="alert">{errorMessage}</p>}{message && <p className="account-message" role="status">{message}</p>}
         <button className="account-primary" type="submit" disabled={busy}>{busy ? "Saving…" : isProfileComplete ? "Save profile" : "Save and continue"}</button>
       </form>
@@ -110,10 +110,11 @@ export default function AuthBar() {
   return <section className="auth-bar" aria-label="Account"><div className="auth-bar-copy"><strong>{profile?.full_name}</strong><span>@{profile?.username} · {user.email}</span>{message && <span className="auth-message">{message}</span>}</div><div className="auth-actions"><button className="auth-button auth-button-secondary" onClick={() => { setFields(fromProfile(profile)); setEditing(true); setMessage(""); setErrorMessage(""); }}>Edit profile</button><button className="auth-button auth-button-secondary" disabled={busy} onClick={() => void run(signOut)}>{busy ? "Please wait…" : "Sign out"}</button></div></section>;
 }
 
-function ProfileFields({ fields, update, age, includeBio }: { fields: Fields; update: <K extends keyof Fields>(key: K, value: Fields[K]) => void; age: number | null; includeBio: boolean }) {
+function ProfileFields({ fields, update, age, includeUsername = false, includeBio }: { fields: Fields; update: <K extends keyof Fields>(key: K, value: Fields[K]) => void; age: number | null; includeUsername?: boolean; includeBio: boolean }) {
   const [genderOther, setGenderOther] = useState(false);
   const genders = ["Woman", "Man", "Non-binary", "Prefer to self-describe", "Prefer not to say"];
   return <div className="profile-fields">
+    {includeUsername && <label>Username<input autoComplete="username" minLength={3} maxLength={24} pattern="[A-Za-z0-9_]{3,24}" value={fields.username} onChange={e => update("username", e.target.value)} required /><small>3–24 letters, numbers or underscores. Usernames are unique.</small></label>}
     <label>Date of birth<input type="date" max={new Date().toISOString().slice(0,10)} value={fields.date_of_birth} onChange={e => update("date_of_birth", e.target.value)} required />{age !== null && <small>Age: {age}</small>}</label>
     <label>Gender<select value={fields.gender} onChange={e => { update("gender", e.target.value); setGenderOther(e.target.value === "Other"); }} required><option value="">Choose gender</option>{genders.map(g => <option key={g}>{g}</option>)}<option>Other</option></select>{genderOther && <small>Choose “Other” only if none of the listed options fits.</small>}</label>
     <label>Country<input autoComplete="country-name" value={fields.country} onChange={e => update("country", e.target.value)} required /></label>
