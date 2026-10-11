@@ -14,7 +14,7 @@ export type Profile = {
   bio: string;
 };
 
-type ProfileInput = Omit<Profile, "id" | "bio"> & { bio?: string };
+type ProfileInput = { full_name: string; username: string; date_of_birth: string; gender: string; country: string; state: string; city: string; bio?: string };
 type AuthContextValue = {
   session: Session | null; user: User | null; profile: Profile | null;
   loading: boolean; profileLoading: boolean; configured: boolean;
