@@ -107,8 +107,7 @@ export default function AuthBar() {
     </div></section>;
   }
 
-  return <section className="auth-bar" aria-label="Account"><div className="auth-bar-copy"><strong>{profile.full_name}</strong><span>@{profile.username} · {user.email}</span>{message && <span className="auth-message">{message}</span>}</div><div className="auth-actions"><button className="auth-button auth-button-secondary" onClick={() => { setFields(fromProfile(profile)); setEditing(true); setMessage(""); setErrorMessage(""); }}>Edit profile</button><button className="auth-button auth-button-secondary" disabled={busy} onClick={() => void run(signOut)}>{busy ? "Please wait…" : "Sign out"}</button></div></section>
-  );
+  return <section className="auth-bar" aria-label="Account"><div className="auth-bar-copy"><strong>{profile.full_name}</strong><span>@{profile.username} · {user.email}</span>{message && <span className="auth-message">{message}</span>}</div><div className="auth-actions"><button className="auth-button auth-button-secondary" onClick={() => { setFields(fromProfile(profile)); setEditing(true); setMessage(""); setErrorMessage(""); }}>Edit profile</button><button className="auth-button auth-button-secondary" disabled={busy} onClick={() => void run(signOut)}>{busy ? "Please wait…" : "Sign out"}</button></div></section>;
 }
 
 function ProfileFields({ fields, update, age, includeBio }: { fields: Fields; update: <K extends keyof Fields>(key: K, value: Fields[K]) => void; age: number | null; includeBio: boolean }) {
