@@ -63,3 +63,6 @@
 .auth-settings-button svg{width:20px;height:20px;stroke:currentColor;stroke-width:2}
 .auth-settings-menu{border-radius:8px;box-shadow:0 8px 22px rgba(20,32,20,.14)}
 .auth-settings-menu button{border-radius:5px}
+
+.account-screen.account-edit-overlay{position:fixed;inset:0;z-index:1000;min-height:100vh;overflow-y:auto;background:rgba(20,28,20,.42);backdrop-filter:blur(3px)}
+.account-edit-overlay .account-panel{margin:auto;box-shadow:0 24px 80px rgba(15,25,15,.22)}
