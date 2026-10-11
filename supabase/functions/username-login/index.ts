@@ -1,6 +1,5 @@
 // Supabase Edge Function: username-login
-// Deploy this function in Supabase and set its standard SUPABASE_URL,
-// SUPABASE_ANON_KEY, and SUPABASE_SERVICE_ROLE_KEY secrets.
+// Configure PROJECT_URL, PUBLIC_API_KEY, and SERVER_SERVICE_ROLE_KEY in Supabase Edge Function Secrets.
 // The service-role key must never be placed in frontend environment variables.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -23,9 +22,9 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Enter a valid username and password." }), { status: 400, headers });
     }
 
-    const url = Deno.env.get("SUPABASE_URL");
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const url = Deno.env.get("PROJECT_URL");
+    const anonKey = Deno.env.get("PUBLIC_API_KEY");
+    const serviceKey = Deno.env.get("SERVER_SERVICE_ROLE_KEY");
     if (!url || !anonKey || !serviceKey) throw new Error("Function secrets are not configured.");
 
     const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
