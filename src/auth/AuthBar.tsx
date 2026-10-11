@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useAuth, type Profile } from "./AuthContext";
 import "./auth.css";
 
@@ -24,6 +24,12 @@ export default function AuthBar() {
   const [errorMessage, setErrorMessage] = useState("");
   const isProfileComplete = complete(profile);
   const age = useMemo(() => ageFromDob(fields.date_of_birth), [fields.date_of_birth]);
+  useEffect(() => {
+    if (user && !editing && fields === emptyFields && !profileLoading) {
+      const name = typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : typeof user.user_metadata?.name === "string" ? user.user_metadata.name : "";
+      setFields(fromProfile(profile, name));
+    }
+  }, [user?.id, profile?.id, profileLoading, editing, fields]);
 
   function update<K extends keyof Fields>(key: K, value: Fields[K]) { setFields(prev => ({ ...prev, [key]: value })); }
   function showMode(next: Mode) { setMode(next); setMessage(""); setErrorMessage(""); setPassword(""); }
