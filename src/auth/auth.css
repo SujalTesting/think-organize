@@ -42,3 +42,16 @@
  .auth-actions{width:100%;justify-content:stretch}
  .auth-actions .auth-button{flex:1}
 }
+
+
+/* Account menu and profile bio */
+.auth-bar-bio{margin:2px 0 0;max-width:min(620px,75vw);font-size:12px;line-height:1.55;color:#687365;overflow-wrap:anywhere}
+.auth-menu-wrap{position:relative;flex-shrink:0}
+.auth-settings-button{display:grid;place-items:center;width:42px;height:42px;padding:9px;border:1px solid #dfe5da;border-radius:10px;background:#fff;color:#344b37;cursor:pointer}
+.auth-settings-button:hover{background:#f4f6f0;border-color:#bfcdb9}
+.auth-settings-button:focus-visible{outline:3px solid #9cb49580;outline-offset:2px}
+.auth-settings-button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.auth-settings-menu{position:absolute;z-index:50;right:0;top:calc(100% + 8px);width:170px;padding:6px;background:#fff;border:1px solid #e1e5dc;border-radius:11px;box-shadow:0 12px 30px #1d2a1b1c}
+.auth-settings-menu button{display:block;width:100%;padding:10px 11px;text-align:left;border:0;border-radius:7px;background:transparent;color:#344b37;font:600 12px "DM Sans",system-ui,sans-serif;cursor:pointer}
+.auth-settings-menu button:hover{background:#f1f4ed}
+.auth-settings-menu button:disabled{opacity:.6;cursor:wait}
