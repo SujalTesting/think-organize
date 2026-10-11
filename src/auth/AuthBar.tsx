@@ -94,7 +94,7 @@ export default function AuthBar() {
 
   if (!isProfileComplete || editing) {
     const nameFromGoogle = typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : typeof user.user_metadata?.name === "string" ? user.user_metadata.name : "";
-    return <section className="account-screen"><div className="account-panel account-panel-wide">
+    return <section className="account-screen account-edit-overlay"><div className="account-panel account-panel-wide">
       <p className="account-kicker">COMPLETE YOUR PROFILE</p><h1>{isProfileComplete ? "Edit your profile." : "A few details first."}</h1>
       <p className="account-subtitle">{isProfileComplete ? "Keep your profile information up to date." : "Please complete every required field before entering your learning workspace."}</p>
       <form onSubmit={submit} className="account-form">
