@@ -40,7 +40,7 @@ export default function AuthBar() {
         )}
         {user && (
           <span className="auth-local-note">
-            Cloud sync is not enabled yet. Learning data is still saved on this device.
+            Learning data is saved locally and sync status appears in the workspace.
           </span>
         )}
       </div>
