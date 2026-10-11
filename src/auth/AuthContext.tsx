@@ -40,10 +40,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
-    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (!active) return;
       setSession(nextSession);
       setLoading(false);
+
+      // Supabase consumes the OAuth callback before emitting a signed-in
+      // session. Once that session exists, remove token parameters from the
+      // URL while preserving the current path and query string.
+      if (
+        nextSession &&
+        (event === "SIGNED_IN" || event === "INITIAL_SESSION") &&
+        window.location.hash
+      ) {
+        const hashParams = new URLSearchParams(window.location.hash.slice(1));
+        if (hashParams.has("access_token") || hashParams.has("refresh_token")) {
+          window.history.replaceState(
+            window.history.state,
+            document.title,
+            `${window.location.pathname}${window.location.search}`,
+          );
+        }
+      }
     });
 
     return () => {
