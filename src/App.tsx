@@ -7,7 +7,8 @@ import { loadLearningData, saveLearningData } from "./lib/learningDataSync";
 
 type TopicStatus = "Not started" | "In progress" | "Practicing" | "Needs review" | "Mastered";
 type WorkStatus = "Not started" | "In progress" | "Blocked" | "Completed";
-type TopicProgress = { status: TopicStatus; confidence: number; notes: string };
+type TimeEntry = { id: string; date: string; minutes: number; note: string };
+type TopicProgress = { status: TopicStatus; confidence: number; notes: string; timeEntries: TimeEntry[] };
 type LearningData = {
   moduleId: "genai-agentic-ai";
   schemaVersion: 1;
@@ -30,7 +31,7 @@ function normalizeData(value: unknown): LearningData {
   if (isRecord(value.topics)) Object.entries(value.topics).forEach(([id, raw]) => {
     if (!isRecord(raw)) return;
     const status = topicStatuses.includes(raw.status as TopicStatus) ? raw.status as TopicStatus : "Not started";
-    next.topics[id] = { status, confidence: typeof raw.confidence === "number" ? Math.max(0, Math.min(5, Math.round(raw.confidence))) : 0, notes: typeof raw.notes === "string" ? raw.notes : "" };
+    next.topics[id] = { status, confidence: typeof raw.confidence === "number" ? Math.max(0, Math.min(5, Math.round(raw.confidence))) : 0, notes: typeof raw.notes === "string" ? raw.notes : "", timeEntries: Array.isArray(raw.timeEntries) ? raw.timeEntries.filter(isRecord).map((entry, index) => ({ id: typeof entry.id === "string" ? entry.id : "legacy-" + id + "-" + index, date: typeof entry.date === "string" ? entry.date : new Date().toISOString(), minutes: typeof entry.minutes === "number" && Number.isFinite(entry.minutes) ? Math.max(1, Math.min(1440, Math.round(entry.minutes))) : 1, note: typeof entry.note === "string" ? entry.note : "" })) : [] };
   });
   if (isRecord(value.projects)) Object.entries(value.projects).forEach(([id, status]) => { if (workStatuses.includes(status as WorkStatus)) next.projects[id] = status as WorkStatus; });
   if (isRecord(value.weeks)) Object.entries(value.weeks).forEach(([id, status]) => { if (workStatuses.includes(status as WorkStatus)) next.weeks[id] = status as WorkStatus; });
@@ -56,7 +57,12 @@ export default function App() {
   const [data, setData] = useState<LearningData>(readLocal);
   const [tab, setTabState] = useState<Tab>(() => {
     const hash = window.location.hash.replace(/^#\/?/, "");
-    return navItems.some(([id]) => id === hash) ? hash as Tab : "dashboard";
+    const route = hash.startsWith("topic/") ? "roadmap" : hash;
+    return navItems.some(([id]) => id === route) ? route as Tab : "dashboard";
+  });
+  const [selectedTopicId, setSelectedTopicId] = useState<string | null>(() => {
+    const match = window.location.hash.replace(/^#\/?/, "").match(/^topic\/(.+)$/);
+    return match?.[1] || null;
   });
   const [syncStatus, setSyncStatus] = useState<"local" | "loading" | "synced" | "error">("local");
   const [cloudReady, setCloudReady] = useState(false);
@@ -69,12 +75,35 @@ export default function App() {
 
   function setTab(next: Tab) {
     setTabState(next);
-    window.history.replaceState({ tab: next }, "", `${window.location.pathname}${window.location.search}#${next}`);
+    setSelectedTopicId(null);
+    window.history.pushState({ tab: next }, "", `${window.location.pathname}${window.location.search}#${next}`);
+  }
+  function openTopic(id: string) {
+    setSelectedTopicId(id);
+    setTabState("roadmap");
+    window.history.pushState({ tab: "roadmap", topicId: id }, "", `${window.location.pathname}${window.location.search}#topic/${id}`);
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }
+  function updateTopic(id: string, patch: Partial<TopicProgress>) {
+    setData(current => {
+      const old = current.topics[id] || { status: "Not started" as TopicStatus, confidence: 0, notes: "", timeEntries: [] };
+      return { ...current, topics: { ...current.topics, [id]: { ...old, ...patch } } };
+    });
+  }
+  function recordTopicTime(id: string, minutes: number, note: string) {
+    const entry: TimeEntry = { id: crypto.randomUUID(), date: new Date().toISOString(), minutes, note };
+    setData(current => {
+      const old = current.topics[id] || { status: "Not started" as TopicStatus, confidence: 0, notes: "", timeEntries: [] };
+      return { ...current, topics: { ...current.topics, [id]: { ...old, timeEntries: [...old.timeEntries, entry] } } };
+    });
   }
   useEffect(() => {
     const syncRoute = () => {
       const hash = window.location.hash.replace(/^#\/?/, "");
-      setTabState(navItems.some(([id]) => id === hash) ? hash as Tab : "dashboard");
+      const match = hash.match(/^topic\/(.+)$/);
+      setSelectedTopicId(match?.[1] || null);
+      const route = match ? "roadmap" : hash;
+      setTabState(navItems.some(([id]) => id === route) ? route as Tab : "dashboard");
     };
     window.addEventListener("hashchange", syncRoute);
     window.addEventListener("popstate", syncRoute);
@@ -146,15 +175,10 @@ export default function App() {
   const readinessCount = readinessChecks.filter(c => data.readiness[c.id]?.passed).length;
   const progressPercent = Math.round(completedTopics / topics.length * 100);
   const nextTopic = topics.find(t => topicStatus(t.id) !== "Mastered");
+  const selectedTopic = topics.find(t => t.id === selectedTopicId);
   const filteredResources = resources.filter(r => `${r.title} ${r.type} ${r.coverage} ${r.id}`.toLowerCase().includes(resourceQuery.toLowerCase()));
   const filteredGlossary = glossary.filter(g => `${g.term} ${g.meaning}`.toLowerCase().includes(glossaryQuery.toLowerCase()));
 
-  function updateTopic(id: string, patch: Partial<TopicProgress>) {
-    setData(current => {
-      const old = current.topics[id] || { status: "Not started" as TopicStatus, confidence: 0, notes: "" };
-      return { ...current, topics: { ...current.topics, [id]: { ...old, ...patch } } };
-    });
-  }
   function updateProject(id: string, status: WorkStatus) { setData(current => ({ ...current, projects: { ...current.projects, [id]: status } })); }
   function updateWeek(id: string, status: WorkStatus) { setData(current => ({ ...current, weeks: { ...current.weeks, [id]: status } })); }
   function toggleResource(id: string) { setData(current => ({ ...current, completedResources: current.completedResources.includes(id) ? current.completedResources.filter(x => x !== id) : [...current.completedResources, id] })); }
@@ -164,8 +188,8 @@ export default function App() {
 
   return <div className="app-shell">
     <aside className="sidebar">
-      <div className="brand-mark">AI<span>+</span></div>
-      <div className="brand-copy"><b>GenAI Learning Lab</b><small>Learn · Build · Evaluate</small></div>
+      <div className="brand-lockup"><div className="brand-mark" aria-label="AI learning mark"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 4.5 25.5 10v12L16 27.5 6.5 22V10z" fill="none" stroke="currentColor" strokeWidth="1.6"/><circle cx="16" cy="16" r="3.2" fill="currentColor"/><circle cx="16" cy="7.5" r="1.5" fill="#b8d4a9"/><circle cx="23.3" cy="20.2" r="1.5" fill="#b8d4a9"/><circle cx="8.7" cy="20.2" r="1.5" fill="#b8d4a9"/></svg></div><div className="brand-copy"><b>GenAI Learning Lab</b><small>Learn · Build · Evaluate</small></div></div>
+      <div className="sidebar-account"><span>YOUR ACCOUNT</span><strong>{user ? (user.user_metadata?.username || user.email?.split("@")[0] || "Learner") : "Personal workspace"}</strong></div>
       <p className="nav-label">LEARNING WORKSPACE</p>
       <nav>{navItems.map(([id, icon, label]) => <button key={id} className={`nav-link ${tab === id ? "selected" : ""}`} onClick={() => setTab(id)}><span className="nav-icon">{icon}</span>{label}{id === "readiness" && <small>{readinessCount}/{readinessChecks.length}</small>}</button>)}</nav>
       <div className="sidebar-bottom">
@@ -178,7 +202,7 @@ export default function App() {
     <main className="main-area">
       <header className="topbar">
         <div><span className="breadcrumb">WORKSPACE</span><span className="breadcrumb-divider">/</span><b>{navItems.find(([id]) => id === tab)?.[2]}</b></div>
-        <div className="topbar-right"><span className="module-pill"><i /> GENAI & AGENTIC AI</span><span className="user-chip">{user?.email?.split("@")[0] || "Personal workspace"}</span></div>
+        <div className="topbar-right"><span className="page-context">Learn · Build · Evaluate</span></div>
       </header>
       <div className="page-content">
         {tab === "dashboard" && <section>
@@ -198,11 +222,11 @@ export default function App() {
           <div className="note-banner"><span>✦</span><div><b>Progress is evidence, not time spent.</b><p>Mark a topic as mastered only when you can explain it, implement it, and show the practical proof. The 12-week plan is a first pass, not a promise of mastery.</p></div><button className="button-quiet" onClick={() => setTab("readiness")}>Check readiness</button></div>
         </section>}
 
-        {tab === "roadmap" && <section><div className="page-intro"><p className="eyebrow">89 TOPICS · 13 LEARNING AREAS</p><h1>The master <em>roadmap.</em></h1><p>Track status, confidence, and personal questions. Use practical projects to turn each topic into demonstrable skill.</p></div>
+        {tab === "roadmap" && !selectedTopic && <section><div className="page-intro"><p className="eyebrow">89 TOPICS · 13 LEARNING AREAS</p><h1>The master <em>roadmap.</em></h1><p>Track status, confidence, and personal questions. Use practical projects to turn each topic into demonstrable skill.</p></div>
           <div className="roadmap-summary"><div><b>{completedTopics}</b><span>Mastered</span></div><div><b>{startedTopics}</b><span>Started</span></div><div><b>{estimatedHours}</b><span>Estimated hours</span></div><div><b>{progressPercent}%</b><span>Mastery progress</span></div></div>
           <div className="filters"><label className="search-box"><span>⌕</span><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search topics or areas…" /></label><select value={areaFilter} onChange={e=>setAreaFilter(e.target.value)}>{areas.map(a=><option key={a}>{a}</option>)}</select><select value={priorityFilter} onChange={e=>setPriorityFilter(e.target.value)}>{["All priorities","Core","Important","Optional","Core for RAG","Core for production RAG","Core for long-running agents","Core for production MCP"].map(s=><option key={s}>{s}</option>)}</select><select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)}>{["All statuses",...topicStatuses].map(s=><option key={s}>{s}</option>)}</select></div>
           <div className="result-label">Showing {filteredTopics.length} of {topics.length} topics</div>
-          <div className="topic-list">{filteredTopics.map(t=>{const p=data.topics[t.id]||{status:"Not started" as TopicStatus,confidence:0,notes:""};return <article className="topic-card" key={t.id}><div className="topic-marker">{p.status==="Mastered"?"✓":t.id.slice(-2)}</div><div className="topic-main"><div className="topic-tags"><span>{t.area}</span><span className={t.priority.startsWith("Core")?"priority-core":t.priority==="Optional"?"priority-optional":"priority-important"}>{t.priority}</span><span>{t.level}</span><span>{t.hours}h</span></div><h3>{t.title}</h3><details><summary>Learning notes and practical evidence</summary><p className="evidence-prompt">Before marking this mastered, explain the concept in your own words, build a small example, and record evidence such as a repo link, test, screenshot, or experiment result.</p><textarea value={p.notes} onChange={e=>updateTopic(t.id,{notes:e.target.value})} placeholder="What did you learn? What did you build? What questions remain?" rows={3}/></details></div><div className="topic-controls"><label><span>Status</span><select value={p.status} onChange={e=>updateTopic(t.id,{status:e.target.value as TopicStatus})}>{topicStatuses.map(s=><option key={s}>{s}</option>)}</select></label><label><span>Confidence</span><select value={p.confidence} onChange={e=>updateTopic(t.id,{confidence:Number(e.target.value)})}><option value={0}>Not rated</option>{[1,2,3,4,5].map(n=><option value={n} key={n}>{n} / 5</option>)}</select></label></div></article>})}</div>
+          <div className="topic-list">{filteredTopics.map(t=>{const p=data.topics[t.id]||{status:"Not started" as TopicStatus,confidence:0,notes:"",timeEntries:[]};return <article className="topic-card topic-card-clickable" key={t.id} role="link" tabIndex={0} onClick={()=>openTopic(t.id)} onKeyDown={e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openTopic(t.id);}}}><div className="topic-marker">{p.status==="Mastered"?"✓":t.id.slice(-2)}</div><div className="topic-main"><div className="topic-tags"><span>{t.area}</span><span className={t.priority.startsWith("Core")?"priority-core":t.priority==="Optional"?"priority-optional":"priority-important"}>{t.priority}</span><span>{t.level}</span><span>{t.hours}h</span></div><h3>{t.title}</h3>{p.notes.trim()&&<p className="topic-note-preview">{p.notes}</p>}</div><div className="topic-card-meta"><span className={"topic-status-badge status-"+p.status.toLowerCase().replaceAll(" ","-")}>{p.status}</span><span className="confidence-rate">{p.confidence?"Confidence "+p.confidence+"/5":"Confidence not rated"}</span><span className="topic-open-hint">Open topic ↗</span></div></article>})}</div>
         </section>}
 
         {tab === "resources" && <section><div className="page-intro"><p className="eyebrow">20 CURATED LEARNING RESOURCES</p><h1>Learn from <em>the source.</em></h1><p>Prioritize official documentation for exact API behavior; use courses and videos to build intuition. API and model usage may have separate costs.</p></div><label className="search-box resource-search"><span>⌕</span><input value={resourceQuery} onChange={e=>setResourceQuery(e.target.value)} placeholder="Search courses, docs, or topics…" /></label><div className="resource-grid">{filteredResources.map(r=><article className="resource-card" key={r.id}><div className="resource-top"><span className="resource-id">{r.id}</span><label className="check-label"><input type="checkbox" checked={data.completedResources.includes(r.id)} onChange={()=>toggleResource(r.id)}/> Reviewed</label></div><p className="resource-type">{r.type}</p><h3>{r.title}</h3><p>{r.coverage}</p><div className="resource-meta"><span>{r.difficulty}</span><span>{r.cost}</span></div><div className="resource-actions"><a href={r.url} target="_blank" rel="noreferrer">Open resource ↗</a><a href={r.video} target="_blank" rel="noreferrer">Video ↗</a></div></article>)}</div></section>}
