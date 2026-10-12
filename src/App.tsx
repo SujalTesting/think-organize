@@ -212,7 +212,6 @@ export default function App() {
 
   return <div className="app-shell">
     <aside className="sidebar">
-      <div className="brand-lockup"><div className="brand-mark" aria-label="AI learning mark"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 4.5 25.5 10v12L16 27.5 6.5 22V10z" fill="none" stroke="currentColor" strokeWidth="1.6"/><circle cx="16" cy="16" r="3.2" fill="currentColor"/><circle cx="16" cy="7.5" r="1.5" fill="#b8d4a9"/><circle cx="23.3" cy="20.2" r="1.5" fill="#b8d4a9"/><circle cx="8.7" cy="20.2" r="1.5" fill="#b8d4a9"/></svg></div><div className="brand-copy"><b>GenAI Learning Lab</b><small>Learn · Build · Evaluate</small></div></div>
       <div className="sidebar-account"><span>YOUR ACCOUNT</span><strong>{user ? (profile?.username || user.email?.split("@")[0] || "Learner") : "Personal workspace"}</strong></div>
       <p className="nav-label">LEARNING WORKSPACE</p>
       <nav>{navItems.map(([id, icon, label]) => <button key={id} className={`nav-link ${tab === id ? "selected" : ""}`} onClick={() => setTab(id)}><span className="nav-icon">{icon}</span>{label}{id === "readiness" && <small>{readinessCount}/{readinessChecks.length}</small>}</button>)}</nav>
