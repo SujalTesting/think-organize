@@ -64,11 +64,9 @@ export default function App() {
   const [areaFilter, setAreaFilter] = useState("All areas");
   const [priorityFilter, setPriorityFilter] = useState("All priorities");
   const [statusFilter, setStatusFilter] = useState("All statuses");
-  const [toast, setToast] = useState("");
   const [resourceQuery, setResourceQuery] = useState("");
   const [glossaryQuery, setGlossaryQuery] = useState("");
 
-  function notify(message: string) { setToast(message); window.setTimeout(() => setToast(""), 2200); }
   function setTab(next: Tab) {
     setTabState(next);
     window.history.replaceState({ tab: next }, "", `${window.location.pathname}${window.location.search}#${next}`);
@@ -221,6 +219,5 @@ export default function App() {
       </div>
       <footer><span>GENAI LEARNING LAB</span><span>Learn deliberately. Build responsibly. Verify with evidence.</span><span>{syncStatus === "synced" ? "All changes synced" : syncStatus === "error" ? "Cloud sync needs attention" : "Progress saves automatically"}</span></footer>
     </main>
-    {toast && <div className="toast-message">{toast}</div>}
   </div>;
 }
