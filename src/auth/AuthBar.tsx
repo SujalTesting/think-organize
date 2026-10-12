@@ -19,6 +19,7 @@ export default function AuthBar() {
   const [password, setPassword] = useState("");
   const [fields, setFields] = useState<Fields>(emptyFields);
   const [editing, setEditing] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -92,6 +93,25 @@ export default function AuthBar() {
     </div></section>
   );
 
+  if (user && profileOpen && !editing) {
+    const rows: [string, string][] = [
+      ["Full name", profile?.full_name || "Not set"],
+      ["Username", profile?.username || "Not set"],
+      ["Email", user.email || "Not available"],
+      ["Date of birth", profile?.date_of_birth || "Not set"],
+      ["Gender", profile?.gender || "Not set"],
+      ["Country", profile?.country || "Not set"],
+      ["State / province", profile?.state || "Not set"],
+      ["City", profile?.city || "Not set"],
+    ];
+    return <section className="account-screen account-edit-overlay"><div className="account-panel account-panel-wide profile-view-panel">
+      <p className="account-kicker">YOUR ACCOUNT</p><h1>Your profile.</h1><p className="account-subtitle">Review your account details and keep your information up to date.</p>
+      <div className="profile-view-grid">{rows.map(([label, value]) => <div className="profile-view-field" key={label}><span>{label}</span><strong>{value}</strong></div>)}{profile?.bio?.trim() && <div className="profile-view-field profile-view-bio"><span>Bio</span><strong>{profile.bio}</strong></div>}</div>
+      <button className="account-primary profile-edit-action" onClick={() => { setFields(fromProfile(profile)); setEditing(true); setProfileOpen(false); setMessage(""); setErrorMessage(""); }}>Edit profile</button>
+      <button className="account-link" onClick={() => setProfileOpen(false)}>Close profile</button>
+    </div></section>;
+  }
+
   if (!isProfileComplete || editing) {
     const nameFromGoogle = typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : typeof user.user_metadata?.name === "string" ? user.user_metadata.name : "";
     return <section className="account-screen account-edit-overlay"><div className="account-panel account-panel-wide">
@@ -109,7 +129,7 @@ export default function AuthBar() {
     </div></section>;
   }
 
-  return <section className="auth-bar" aria-label="Account"><div className="auth-bar-copy"><span className="auth-bar-eyebrow">YOUR ACCOUNT</span><div className="auth-bar-identity"><strong>{profile?.username}</strong></div>{profile?.bio?.trim() && <p className="auth-bar-bio">{profile.bio}</p>}{message && <span className="auth-message">{message}</span>}</div><div className="auth-menu-wrap"><button type="button" className="auth-settings-button" aria-label="Account settings" aria-expanded={accountMenuOpen} onClick={() => setAccountMenuOpen(open => !open)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>{accountMenuOpen && <div className="auth-settings-menu"><button type="button" onClick={() => { setFields(fromProfile(profile)); setEditing(true); setAccountMenuOpen(false); setMessage(""); setErrorMessage(""); }}>Edit profile</button><button type="button" onClick={() => { setFields(fromProfile(profile)); setEditing(true); setAccountMenuOpen(false); setMessage(""); setErrorMessage(""); }}>Profile</button><button type="button" disabled={busy} onClick={() => { setAccountMenuOpen(false); void run(signOut); }}>{busy ? "Please wait…" : "Sign out"}</button></div>}</div></section>;
+  return <section className="auth-bar" aria-label="Account"><div className="auth-bar-copy"><span className="auth-bar-eyebrow">YOUR ACCOUNT</span><div className="auth-bar-identity"><strong>{profile?.username}</strong></div>{profile?.bio?.trim() && <p className="auth-bar-bio">{profile.bio}</p>}{message && <span className="auth-message">{message}</span>}</div><div className="auth-menu-wrap"><button type="button" className="auth-settings-button" aria-label="Account settings" aria-expanded={accountMenuOpen} onClick={() => setAccountMenuOpen(open => !open)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>{accountMenuOpen && <div className="auth-settings-menu"><button type="button" onClick={() => { setProfileOpen(true); setAccountMenuOpen(false); }}>Profile</button><button type="button" disabled={busy} onClick={() => { setAccountMenuOpen(false); void run(signOut); }}>{busy ? "Please wait…" : "Sign out"}</button></div>}</div></section>;
 }
 
 function ProfileFields({ fields, update, age, includeUsername = false, includeBio }: { fields: Fields; update: <K extends keyof Fields>(key: K, value: Fields[K]) => void; age: number | null; includeUsername?: boolean; includeBio: boolean }) {
