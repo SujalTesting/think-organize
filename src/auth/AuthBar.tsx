@@ -12,11 +12,13 @@ function complete(p: Profile | null) { return Boolean(p?.full_name?.trim() && p.
 function ageFromDob(dob: string) { if (!dob) return null; const today = new Date(), birth = new Date(dob + "T12:00:00"); let age = today.getFullYear() - birth.getFullYear(); if (today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) age--; return age >= 0 ? age : null; }
 
 export default function AuthBar() {
-  const { user, profile, loading, profileLoading, configured, signInWithGoogle, signUpWithEmail, signInWithEmail, signInWithUsername, resetPassword, saveProfile, signOut } = useAuth();
+  const { user, profile, loading, profileLoading, configured, signInWithGoogle, signUpWithEmail, signInWithEmail, signInWithUsername, resetPassword, updatePassword, recoveryMode, saveProfile, signOut } = useAuth();
   const [mode, setMode] = useState<Mode>("signin");
   const [loginType, setLoginType] = useState<"email" | "username">("email");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [fields, setFields] = useState<Fields>(emptyFields);
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -42,6 +44,12 @@ export default function AuthBar() {
   }
   function submit(event: FormEvent) {
     event.preventDefault();
+    if (recoveryMode) {
+      if (newPassword.length < 8) { setErrorMessage("Use at least 8 characters for your new password."); return; }
+      if (newPassword !== confirmPassword) { setErrorMessage("The passwords do not match."); return; }
+      void run(async () => { await updatePassword(newPassword); setNewPassword(""); setConfirmPassword(""); return "Password updated. You can continue using Communication Lab."; });
+      return;
+    }
     if (mode === "signup" || (user && !isProfileComplete) || (user && editing)) {
       if (!fields.full_name.trim() || !/^[A-Za-z0-9_]{3,24}$/.test(fields.username) || !fields.date_of_birth || !fields.gender || !fields.country.trim() || !fields.state.trim() || !fields.city.trim()) {
         setErrorMessage("Complete every required field. Username must be 3–24 letters, numbers or underscores."); return;
@@ -70,6 +78,8 @@ export default function AuthBar() {
   }
 
   if (loading || (user && profileLoading && !profile)) return <div className="account-loading">Communication Lab · {loading ? "Checking your session…" : "Loading your profile…"}</div>;
+
+  if (recoveryMode) return <section className="account-screen"><div className="account-panel"><p className="account-kicker">COMMUNICATION LAB</p><h1>Choose a new password.</h1><p className="account-subtitle">Enter and confirm your new password to finish resetting your account.</p><form onSubmit={submit} className="account-form"><label>New password<input type="password" autoComplete="new-password" minLength={8} value={newPassword} onChange={e => setNewPassword(e.target.value)} required /><small>Use at least 8 characters.</small></label><label>Confirm new password<input type="password" autoComplete="new-password" minLength={8} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required /></label>{errorMessage && <p className="account-error" role="alert">{errorMessage}</p>}{message && <p className="account-message" role="status">{message}</p>}<button className="account-primary" disabled={busy} type="submit">{busy ? "Updating…" : "Update password"}</button></form></div></section>;
 
   if (!configured) return <section className="account-screen"><div className="account-panel"><p className="account-kicker">COMMUNICATION LAB</p><h1>Account setup required</h1><p>Supabase environment variables must be configured before you can sign in or create an account.</p></div></section>;
 
