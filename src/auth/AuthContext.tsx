@@ -102,7 +102,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithUsername = useCallback(async (username: string, password: string) => {
     if (!supabase) throw new Error("Supabase is not configured.");
     const { data, error } = await supabase.functions.invoke("username-login", { body: { username: username.trim(), password } });
-    if (error) throw new Error("Username sign-in is not deployed yet. Please sign in with email or deploy the username-login function.");
+    if (error) {
+      let detail = error.message || "The username-login request failed.";
+      const context = error.context;
+      if (context && typeof context === "object" && "status" in context) {
+        const status = String((context as { status?: unknown }).status ?? "unknown");
+        try {
+          const response = context as { clone?: () => { json?: () => Promise<unknown> } };
+          const payload = await response.clone?.().json?.();
+          if (payload && typeof payload === "object" && "error" in payload && typeof (payload as { error?: unknown }).error === "string") {
+            detail = (payload as { error: string }).error;
+          }
+        } catch {
+          // Keep the safe SDK error if the response body isn't readable.
+        }
+        throw new Error(`Username sign-in failed (HTTP ${status}): ${detail}`);
+      }
+      throw new Error(`Username sign-in request failed: ${detail}`);
+    }
     if (data?.error) throw new Error(data.error);
     if (!data?.access_token || !data?.refresh_token) throw new Error("Invalid username or password.");
     const { error: sessionError } = await supabase.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token });
