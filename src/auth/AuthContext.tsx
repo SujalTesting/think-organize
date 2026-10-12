@@ -67,6 +67,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(nextSession); setLoading(false);
       if (nextSession?.user.id) void fetchProfile(nextSession.user.id);
       else setProfile(null);
+
+      // Log explicit successful sign-ins, not initial session restore or token refresh.
+      // Audit logging is best-effort and must never block authentication.
+      if (event === "SIGNED_IN" && nextSession?.user.id) {
+        void (async () => {
+          try {
+            const userId = nextSession.user.id;
+            const lastSignInAt = nextSession.user.last_sign_in_at || new Date().toISOString();
+            const dedupeKey = "login-activity:" + userId + ":" + lastSignInAt;
+            if (window.sessionStorage.getItem(dedupeKey)) return;
+
+            const { data: locationProfile, error: profileError } = await supabase
+              .from("profiles")
+              .select("country,state,city")
+              .eq("id", userId)
+              .maybeSingle();
+            if (profileError) console.warn("Could not load profile location for login activity:", profileError.message);
+
+            const { error: insertError } = await supabase.from("login_activity").insert({
+              user_id: userId,
+              country: locationProfile?.country || null,
+              region: locationProfile?.state || null,
+              city: locationProfile?.city || null,
+              time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone || null,
+              locale: typeof navigator !== "undefined" ? navigator.language || null : null,
+              location_source: locationProfile?.country || locationProfile?.state || locationProfile?.city ? "profile" : "not_provided",
+            });
+            if (insertError) {
+              console.warn("Login activity was not recorded. Apply the login_activity migration and check RLS:", insertError.message);
+              return;
+            }
+            window.sessionStorage.setItem(dedupeKey, "1");
+          } catch (loggingError) {
+            console.warn("Login activity logging failed; sign-in remains successful:", loggingError);
+          }
+        })();
+      }
+
       if (nextSession && (event === "SIGNED_IN" || event === "INITIAL_SESSION") && window.location.hash) {
         const params = new URLSearchParams(window.location.hash.slice(1));
         if (params.has("access_token") || params.has("refresh_token")) window.history.replaceState(window.history.state, document.title, `${window.location.pathname}${window.location.search}`);
