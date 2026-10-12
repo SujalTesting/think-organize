@@ -76,7 +76,7 @@ const navItems = [
 ] as const;
 type Tab = typeof navItems[number][0];
 export default function App() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const supabase = getSupabaseClient();
   const [data, setData] = useState<LearningData>(readLocal);
   const [tab, setTabState] = useState<Tab>(() => {
@@ -183,13 +183,13 @@ export default function App() {
   }, [data, user?.id, authLoading, cloudReady, supabase]);
 
   const areas = useMemo(() => ["All areas", ...Array.from(new Set(topics.map(t => t.area)))], []);
+  const topicStatus = (id: string): TopicStatus => data.topics[id]?.status || "Not started";
   const filteredTopics = useMemo(() => topics.filter(t =>
     (areaFilter === "All areas" || t.area === areaFilter) &&
     (priorityFilter === "All priorities" || t.priority === priorityFilter) &&
     (statusFilter === "All statuses" || topicStatus(t.id) === statusFilter) &&
     (t.title.toLowerCase().includes(query.toLowerCase()) || t.area.toLowerCase().includes(query.toLowerCase()))
   ), [areaFilter, priorityFilter, statusFilter, query, data.topics]);
-  const topicStatus = (id: string): TopicStatus => data.topics[id]?.status || "Not started";
   const completedTopics = topics.filter(t => topicStatus(t.id) === "Mastered").length;
   const startedTopics = topics.filter(t => topicStatus(t.id) !== "Not started").length;
   const estimatedHours = topics.reduce((sum, t) => sum + t.hours, 0);
@@ -213,7 +213,7 @@ export default function App() {
   return <div className="app-shell">
     <aside className="sidebar">
       <div className="brand-lockup"><div className="brand-mark" aria-label="AI learning mark"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 4.5 25.5 10v12L16 27.5 6.5 22V10z" fill="none" stroke="currentColor" strokeWidth="1.6"/><circle cx="16" cy="16" r="3.2" fill="currentColor"/><circle cx="16" cy="7.5" r="1.5" fill="#b8d4a9"/><circle cx="23.3" cy="20.2" r="1.5" fill="#b8d4a9"/><circle cx="8.7" cy="20.2" r="1.5" fill="#b8d4a9"/></svg></div><div className="brand-copy"><b>GenAI Learning Lab</b><small>Learn · Build · Evaluate</small></div></div>
-      <div className="sidebar-account"><span>YOUR ACCOUNT</span><strong>{user ? (user.user_metadata?.username || user.email?.split("@")[0] || "Learner") : "Personal workspace"}</strong></div>
+      <div className="sidebar-account"><span>YOUR ACCOUNT</span><strong>{user ? (profile?.username || user.email?.split("@")[0] || "Learner") : "Personal workspace"}</strong></div>
       <p className="nav-label">LEARNING WORKSPACE</p>
       <nav>{navItems.map(([id, icon, label]) => <button key={id} className={`nav-link ${tab === id ? "selected" : ""}`} onClick={() => setTab(id)}><span className="nav-icon">{icon}</span>{label}{id === "readiness" && <small>{readinessCount}/{readinessChecks.length}</small>}</button>)}</nav>
       <div className="sidebar-bottom">
