@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import "./genai.css";
 import { glossary, projects, readinessChecks, resources, topics, weeklyPlan } from "./genaiCurriculum";
 import { useAuth } from "./auth/AuthContext";
 import { getSupabaseClient } from "./lib/supabase";
