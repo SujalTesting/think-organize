@@ -4,7 +4,7 @@ export type Project = { id: string; title: string; description: string; topics: 
 export type Week = { week: string; focus: string; resources: string; output: string; duration: string };
 export type GlossaryItem = { term: string; meaning: string };
 
-const topicRows: [string, [string, string, string, number][]][] = [
+const topicRows: [string, ...[string, string, string, number][]][] = [
 ["1. AI & LLM Fundamentals",
 ["AI vs ML vs Deep Learning vs Generative AI","Core","Beginner",2],
 ["LLM mental model and capabilities","Core","Beginner",3],
@@ -109,7 +109,7 @@ const topicRows: [string, [string, string, string, number][]][] = [
 ["Research literacy and keeping current","Important","Ongoing",2]]
 ];
 
-export const topics: Topic[] = topicRows.flatMap(([area, rows], areaIndex) =>
+export const topics: Topic[] = topicRows.flatMap(([area, ...rows], areaIndex) =>
   rows.map(([title, priority, level, hours], index) => ({
     id: `T${String(areaIndex + 1).padStart(2,"0")}-${String(index + 1).padStart(2,"0")}`,
     area: area as string, title, priority, level, hours
