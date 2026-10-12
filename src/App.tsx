@@ -8,6 +8,8 @@ import { loadLearningData, saveLearningData } from "./lib/learningDataSync";
 type TopicStatus = "Not started" | "In progress" | "Practicing" | "Needs review" | "Mastered";
 type WorkStatus = "Not started" | "In progress" | "Blocked" | "Completed";
 type TimeEntry = { id: string; date: string; minutes: number; note: string };
+type JournalCategory = "Learning" | "Question" | "Blocker" | "Experiment" | "Next action";
+type JournalEntry = { id: string; category: JournalCategory; title: string; content: string; nextAction: string; createdAt: string; actionDone: boolean };
 type TopicProgress = { status: TopicStatus; confidence: number; notes: string; timeEntries: TimeEntry[] };
 type LearningData = {
   moduleId: "genai-agentic-ai";
@@ -18,12 +20,13 @@ type LearningData = {
   completedResources: string[];
   readiness: Record<string, { passed: boolean; evidence: string }>;
   journal: string;
+  journalEntries: JournalEntry[];
 };
 const STORAGE_KEY = "genai-agentic-lab-v1";
 const OWNER_KEY = "genai-agentic-cloud-owner";
 const topicStatuses: TopicStatus[] = ["Not started", "In progress", "Practicing", "Needs review", "Mastered"];
 const workStatuses: WorkStatus[] = ["Not started", "In progress", "Blocked", "Completed"];
-const emptyData = (): LearningData => ({ moduleId: "genai-agentic-ai", schemaVersion: 1, topics: {}, projects: {}, weeks: {}, completedResources: [], readiness: {}, journal: "" });
+const emptyData = (): LearningData => ({ moduleId: "genai-agentic-ai", schemaVersion: 1, topics: {}, projects: {}, weeks: {}, completedResources: [], readiness: {}, journal: "", journalEntries: [] });
 function isRecord(value: unknown): value is Record<string, unknown> { return typeof value === "object" && value !== null && !Array.isArray(value); }
 function normalizeData(value: unknown): LearningData {
   if (!isRecord(value) || value.moduleId !== "genai-agentic-ai" || value.schemaVersion !== 1) return emptyData();
@@ -40,6 +43,7 @@ function normalizeData(value: unknown): LearningData {
     if (isRecord(raw)) next.readiness[id] = { passed: raw.passed === true, evidence: typeof raw.evidence === "string" ? raw.evidence : "" };
   });
   next.journal = typeof value.journal === "string" ? value.journal : "";
+  next.journalEntries = Array.isArray(value.journalEntries) ? value.journalEntries.filter(isRecord).map((entry, index) => ({ id: typeof entry.id === "string" ? entry.id : "journal-" + index, category: ["Learning", "Question", "Blocker", "Experiment", "Next action"].includes(String(entry.category)) ? entry.category as JournalCategory : "Learning", title: typeof entry.title === "string" ? entry.title : "Learning note", content: typeof entry.content === "string" ? entry.content : "", nextAction: typeof entry.nextAction === "string" ? entry.nextAction : "", createdAt: typeof entry.createdAt === "string" ? entry.createdAt : new Date().toISOString(), actionDone: entry.actionDone === true })) : [];
   return next;
 }
 function readLocal(): LearningData {
@@ -96,6 +100,7 @@ export default function App() {
   const [statusFilter, setStatusFilter] = useState("All statuses");
   const [resourceQuery, setResourceQuery] = useState("");
   const [glossaryQuery, setGlossaryQuery] = useState("");
+  const [journalFilter, setJournalFilter] = useState("All entries");
 
   function setTab(next: Tab) {
     setTabState(next);
@@ -113,6 +118,16 @@ export default function App() {
       const old = current.topics[id] || { status: "Not started" as TopicStatus, confidence: 0, notes: "", timeEntries: [] };
       return { ...current, topics: { ...current.topics, [id]: { ...old, ...patch } } };
     });
+  }
+  function addJournalEntry(entry: Omit<JournalEntry, "id" | "createdAt" | "actionDone">) {
+    const next: JournalEntry = { ...entry, id: crypto.randomUUID(), createdAt: new Date().toISOString(), actionDone: false };
+    setData(current => ({ ...current, journalEntries: [next, ...current.journalEntries] }));
+  }
+  function toggleJournalAction(id: string) {
+    setData(current => ({ ...current, journalEntries: current.journalEntries.map(entry => entry.id === id ? { ...entry, actionDone: !entry.actionDone } : entry) }));
+  }
+  function deleteJournalEntry(id: string) {
+    setData(current => ({ ...current, journalEntries: current.journalEntries.filter(entry => entry.id !== id) }));
   }
   function recordTopicTime(id: string, minutes: number, note: string) {
     const entry: TimeEntry = { id: crypto.randomUUID(), date: new Date().toISOString(), minutes, note };
@@ -193,6 +208,8 @@ export default function App() {
   const completedTopics = topics.filter(t => topicStatus(t.id) === "Mastered").length;
   const startedTopics = topics.filter(t => topicStatus(t.id) !== "Not started").length;
   const estimatedHours = topics.reduce((sum, t) => sum + t.hours, 0);
+  const journalEntries = data.journalEntries.filter(entry => journalFilter === "All entries" || entry.category === journalFilter);
+  const openActions = data.journalEntries.filter(entry => entry.nextAction.trim() && !entry.actionDone).length;
   const masteredHours = topics.filter(t => topicStatus(t.id) === "Mastered").reduce((sum, t) => sum + t.hours, 0);
   const projectCount = projects.filter(p => statusOf(data.projects, p.id, "Not started") === "Completed").length;
   const weekCount = weeklyPlan.filter(w => statusOf(data.weeks, w.week, "Not started") === "Completed").length;
@@ -212,7 +229,7 @@ export default function App() {
 
   return <div className="app-shell">
     <aside className="sidebar">
-      <div className="sidebar-account"><span>YOUR ACCOUNT</span><strong>{user ? (profile?.username || user.email?.split("@")[0] || "Learner") : "Personal workspace"}</strong></div>
+      <div className="sidebar-account"><span>YOUR ACCOUNT</span><strong>{user ? (profile?.username || user.email?.split("@")[0] || "Learner") : "Personal workspace"}</strong>{profile?.bio?.trim()&&<p className="sidebar-account-bio" title={profile.bio}>{profile.bio}</p>}</div>
       <p className="nav-label">LEARNING WORKSPACE</p>
       <nav>{navItems.map(([id, icon, label]) => <button key={id} className={`nav-link ${tab === id ? "selected" : ""}`} onClick={() => setTab(id)}><span className="nav-icon">{icon}</span>{label}{id === "readiness" && <small>{readinessCount}/{readinessChecks.length}</small>}</button>)}</nav>
       <div className="sidebar-bottom">
@@ -276,7 +293,7 @@ export default function App() {
                   <article className="detail-panel tracking-panel"><span className="detail-step">YOUR PROGRESS</span><h2>Learning record</h2><label>Status<select value={p.status} onChange={e => updateTopic(selectedTopic.id, { status: e.target.value as TopicStatus })}>{topicStatuses.map(s => <option key={s}>{s}</option>)}</select></label><label>Confidence<select value={p.confidence} onChange={e => updateTopic(selectedTopic.id, { confidence: Number(e.target.value) })}><option value={0}>Not rated</option>{[1,2,3,4,5].map(n => <option value={n} key={n}>{n} / 5</option>)}</select></label><div className="total-time"><span>TOTAL TIME SPENT</span><strong>{formatMinutes(totalMinutes)}</strong><small>{p.timeEntries.length} recorded {p.timeEntries.length === 1 ? "session" : "sessions"}</small></div></article>
                   <article className="detail-panel"><span className="detail-step">TIME TRACKER</span><h2>Record a session</h2><form className="time-entry-form" onSubmit={e => { e.preventDefault(); const form = e.currentTarget; const values = new FormData(form); const minutes = Number(values.get("minutes")); if (!Number.isInteger(minutes) || minutes < 1 || minutes > 1440) return; recordTopicTime(selectedTopic.id, minutes, String(values.get("note") || "").trim()); form.reset(); }}><label>Duration (minutes)<input name="minutes" type="number" min="1" max="1440" defaultValue="30" required /></label><label>Session note<textarea name="note" rows={2} placeholder="What did you work on? (optional)" /></label><button className="button-primary" type="submit">+ Record time</button></form><p className="time-hint">Record the actual time spent learning or practicing this topic.</p></article>
                   <article className="detail-panel"><span className="detail-step">REFLECT</span><h2>Learning notes</h2><textarea className="topic-notes-editor" value={p.notes} onChange={e => updateTopic(selectedTopic.id, { notes: e.target.value })} rows={7} placeholder="Key takeaways, questions, experiments, links to evidence, or what you want to revisit…" /><small className="autosave-hint">Saved automatically to your learning progress.</small></article>
-                  {p.timeEntries.length > 0 && <article className="detail-panel"><span className="detail-step">SESSION HISTORY</span><h2>Recorded sessions</h2><div className="time-history">{[...p.timeEntries].reverse().map(entry => <div className="time-history-row" key={entry.id}><b>{formatMinutes(entry.minutes)}</b><small>{new Date(entry.date).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}</small>{entry.note && <p>{entry.note}</p>}</div>)}</div></article>}
+                  {p.timeEntries.length > 0 && <article className="detail-panel"><span className="detail-step">SESSION HISTORY</span><h2>Recorded sessions</h2><div className="time-history">{[...p.timeEntries].reverse().map(entry => <div className="time-history-row" key={entry.id}><b>{formatMinutes(entry.minutes)}</b><small>{new Date(entry.date).toLocaleString(undefined, { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" })}</small>{entry.note && <p>{entry.note}</p>}</div>)}</div></article>}
                 </aside>
               </div>
             </>;
@@ -293,7 +310,26 @@ export default function App() {
 
         {tab === "readiness" && <section><div className="page-intro"><p className="eyebrow">EVIDENCE BEFORE CONFIDENCE</p><h1>Check your <em>readiness.</em></h1><p>Use this checklist when you have evidence to show. Course completion alone does not establish job readiness.</p></div><div className="readiness-summary"><b>{readinessCount} / {readinessChecks.length}</b><span>capabilities evidenced</span><div className="progress-track"><i style={{width:`${readinessCount/readinessChecks.length*100}%`}} /></div></div><div className="readiness-list">{readinessChecks.map((c,i)=><article className={`readiness-card ${data.readiness[c.id]?.passed?"passed":""}`} key={c.id}><label className="readiness-check"><input type="checkbox" checked={data.readiness[c.id]?.passed||false} onChange={e=>updateReadiness(c.id,{passed:e.target.checked})}/><span>{String(i+1).padStart(2,"0")}</span></label><div className="readiness-copy"><h3>{c.title}</h3><p>{c.evidence}</p><textarea value={data.readiness[c.id]?.evidence||""} onChange={e=>updateReadiness(c.id,{evidence:e.target.value})} placeholder="Evidence link, project, test report, or notes…" rows={2}/></div></article>)}</div><div className="note-banner"><span>✦</span><div><b>Use proof to guide the next step.</b><p>A checked item means you have evidence you can demonstrate, not simply that you have read about it.</p></div></div></section>}
 
-        <section className="journal-panel"><div><p className="eyebrow">PERSONAL LEARNING LOG</p><h2>Questions, insights, next actions</h2><p>Keep a lightweight running note for ideas that do not belong to a single topic.</p></div><textarea value={data.journal} onChange={e=>setData(current=>({...current,journal:e.target.value}))} rows={4} placeholder="What confused you? What will you test next? What did you learn by building?" /></section>
+        <section className="journal-workspace">
+          <div className="journal-heading"><div><p className="eyebrow">PERSONAL LEARNING JOURNAL</p><h2>Turn learning into <em>action.</em></h2><p>Capture discoveries, questions, blockers, and experiments. Each entry is timestamped automatically so you can revisit your learning trail.</p></div><div className="journal-summary"><div><b>{data.journalEntries.length}</b><span>Entries</span></div><div><b>{openActions}</b><span>Open actions</span></div><div><b>{data.journalEntries.filter(entry=>entry.category==="Experiment").length}</b><span>Experiments</span></div></div></div>
+          <div className="journal-columns">
+            <form className="journal-compose" onSubmit={e=>{e.preventDefault();const form=e.currentTarget;const values=new FormData(form);const title=String(values.get("title")||"").trim();const content=String(values.get("content")||"").trim();if(!title||!content)return;addJournalEntry({category:String(values.get("category")||"Learning") as JournalCategory,title,content,nextAction:String(values.get("nextAction")||"").trim()});form.reset();}}>
+              <span className="detail-step">QUICK CAPTURE</span><h3>Record a learning moment</h3>
+              <label>Entry type<select name="category" defaultValue="Learning"><option>Learning</option><option>Question</option><option>Blocker</option><option>Experiment</option><option>Next action</option></select></label>
+              <label>Title<input name="title" maxLength={100} placeholder="e.g. Why does an LLM hallucinate?" required /></label>
+              <label>What happened / what did you learn?<textarea name="content" rows={5} maxLength={4000} placeholder="Capture the insight, question, error, experiment setup, or result…" required /></label>
+              <label>Next action <span className="journal-optional">(optional)</span><input name="nextAction" maxLength={240} placeholder="e.g. Compare two prompts and record accuracy" /></label>
+              <button className="button-primary" type="submit">Save journal entry</button>
+              <p className="journal-form-hint">Date and time are added automatically when you save.</p>
+            </form>
+            <div className="journal-history-panel"><div className="journal-history-heading"><div><h3>Your learning trail</h3><p>Review what you explored and what needs attention.</p></div><select aria-label="Filter journal entries" value={journalFilter} onChange={e=>setJournalFilter(e.target.value)}><option>All entries</option><option>Learning</option><option>Question</option><option>Blocker</option><option>Experiment</option><option>Next action</option></select></div>
+              {data.journalEntries.length===0&&<div className="journal-empty"><span>✦</span><b>Your learning trail starts here.</b><p>Save your first insight, question, or experiment. Use the next-action field to turn it into a concrete step.</p></div>}
+              {data.journalEntries.length>0&&journalEntries.length===0&&<div className="journal-empty"><p>No entries in this category yet.</p></div>}
+              <div className="journal-entry-list">{journalEntries.map(entry=><article className="journal-entry" key={entry.id}><div className="journal-entry-top"><span className={"journal-category category-"+entry.category.toLowerCase().replaceAll(" ","-")}>{entry.category}</span><time dateTime={entry.createdAt}>{new Date(entry.createdAt).toLocaleString(undefined,{day:"numeric",month:"short",year:"numeric",hour:"numeric",minute:"2-digit"})}</time><button type="button" className="journal-delete" aria-label={"Delete journal entry: "+entry.title} onClick={()=>deleteJournalEntry(entry.id)}>Delete</button></div><h4>{entry.title}</h4><p className="journal-entry-content">{entry.content}</p>{entry.nextAction&&<div className={"journal-next-action "+(entry.actionDone?"action-done":"")}><label><input type="checkbox" checked={entry.actionDone} onChange={()=>toggleJournalAction(entry.id)}/><span><b>Next action</b><small>{entry.nextAction}</small></span></label><span className="action-state">{entry.actionDone?"Done":"To do"}</span></div>}</article>)}</div>
+            </div>
+          </div>
+          {data.journal.trim()&&<details className="legacy-journal"><summary>Earlier learning notes</summary><p>Your previous free-form note is preserved below. You can continue editing it or leave it as an archive.</p><textarea value={data.journal} onChange={e=>setData(current=>({...current,journal:e.target.value}))} rows={4}/></details>}
+        </section>
       </div>
       <footer><span>GENAI LEARNING LAB</span><span>Learn deliberately. Build responsibly. Verify with evidence.</span><span>{syncStatus === "synced" ? "All changes synced" : syncStatus === "error" ? "Cloud sync needs attention" : "Progress saves automatically"}</span></footer>
     </main>
