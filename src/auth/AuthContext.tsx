@@ -17,12 +17,13 @@ export type Profile = {
 type ProfileInput = { full_name: string; username: string; date_of_birth: string; gender: string; country: string; state: string; city: string; bio?: string };
 type AuthContextValue = {
   session: Session | null; user: User | null; profile: Profile | null;
-  loading: boolean; profileLoading: boolean; configured: boolean;
+  loading: boolean; profileLoading: boolean; configured: boolean; recoveryMode: boolean;
   signInWithGoogle: () => Promise<void>;
   signUpWithEmail: (email: string, password: string, profile: ProfileInput) => Promise<string | null>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signInWithUsername: (username: string, password: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
+  updatePassword: (password: string) => Promise<void>;
   saveProfile: (profile: ProfileInput) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -36,6 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(Boolean(supabase));
   const [profile, setProfile] = useState<Profile | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
+  const [recoveryMode, setRecoveryMode] = useState(false);
 
   const fetchProfile = useCallback(async (id?: string) => {
     if (!supabase || !id) { setProfile(null); setProfileLoading(false); return; }
@@ -64,6 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     const { data } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (!active) return;
+      if (event === "PASSWORD_RECOVERY") setRecoveryMode(true);
       setSession(nextSession); setLoading(false);
       if (nextSession?.user.id) void fetchProfile(nextSession.user.id);
       else setProfile(null);
@@ -132,6 +135,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
   }, [supabase]);
 
+  const updatePassword = useCallback(async (password: string) => {
+    if (!supabase) throw new Error("Supabase is not configured.");
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) throw error;
+    setRecoveryMode(false);
+  }, [supabase]);
+
   const saveProfile = useCallback(async (p: ProfileInput) => {
     if (!supabase || !session?.user.id) throw new Error("Sign in before saving your profile.");
     const values = { ...p, full_name: p.full_name.trim(), username: p.username.trim(), country: p.country.trim(), state: p.state.trim(), city: p.city.trim(), bio: (p.bio || "").trim() };
@@ -146,7 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
   }, [supabase]);
 
-  const value = useMemo<AuthContextValue>(() => ({ session, user: session?.user ?? null, profile, loading, profileLoading, configured: Boolean(supabase), signInWithGoogle, signUpWithEmail, signInWithEmail, signInWithUsername, resetPassword, saveProfile, signOut, refreshProfile }), [session, profile, loading, profileLoading, supabase, signInWithGoogle, signUpWithEmail, signInWithEmail, signInWithUsername, resetPassword, saveProfile, signOut, refreshProfile]);
+  const value = useMemo<AuthContextValue>(() => ({ session, user: session?.user ?? null, profile, loading, profileLoading, configured: Boolean(supabase), recoveryMode, signInWithGoogle, signUpWithEmail, signInWithEmail, signInWithUsername, resetPassword, updatePassword, saveProfile, signOut, refreshProfile }), [session, profile, loading, profileLoading, supabase, recoveryMode, signInWithGoogle, signUpWithEmail, signInWithEmail, signInWithUsername, resetPassword, updatePassword, saveProfile, signOut, refreshProfile]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
