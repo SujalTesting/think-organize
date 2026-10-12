@@ -38,3 +38,22 @@ comment on column public.login_activity.logged_at is
   'Database-generated timestamp for the login event, stored with time zone.';
 comment on column public.login_activity.location_source is
   'profile means user-entered profile location; not_provided means no profile location was available.';
+
+-- Always use a database timestamp for the audit event, not a client-supplied value.
+create or replace function public.set_login_activity_logged_at()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.logged_at := now();
+  return new;
+end;
+$$;
+
+revoke all on function public.set_login_activity_logged_at() from public;
+
+drop trigger if exists set_login_activity_logged_at on public.login_activity;
+create trigger set_login_activity_logged_at
+  before insert on public.login_activity
+  for each row execute function public.set_login_activity_logged_at();
