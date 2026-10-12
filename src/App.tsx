@@ -135,18 +135,19 @@ export default function App() {
   const filteredTopics = useMemo(() => topics.filter(t =>
     (areaFilter === "All areas" || t.area === areaFilter) &&
     (priorityFilter === "All priorities" || t.priority === priorityFilter) &&
-    (statusFilter === "All statuses" || statusOf(data.topics, t.id, "Not started" as TopicStatus) === statusFilter) &&
+    (statusFilter === "All statuses" || topicStatus(t.id) === statusFilter) &&
     (t.title.toLowerCase().includes(query.toLowerCase()) || t.area.toLowerCase().includes(query.toLowerCase()))
   ), [areaFilter, priorityFilter, statusFilter, query, data.topics]);
-  const completedTopics = topics.filter(t => statusOf(data.topics, t.id, "Not started") === "Mastered").length;
-  const startedTopics = topics.filter(t => statusOf(data.topics, t.id, "Not started") !== "Not started").length;
+  const topicStatus = (id: string): TopicStatus => data.topics[id]?.status || "Not started";
+  const completedTopics = topics.filter(t => topicStatus(t.id) === "Mastered").length;
+  const startedTopics = topics.filter(t => topicStatus(t.id) !== "Not started").length;
   const estimatedHours = topics.reduce((sum, t) => sum + t.hours, 0);
-  const masteredHours = topics.filter(t => statusOf(data.topics, t.id, "Not started") === "Mastered").reduce((sum, t) => sum + t.hours, 0);
+  const masteredHours = topics.filter(t => topicStatus(t.id) === "Mastered").reduce((sum, t) => sum + t.hours, 0);
   const projectCount = projects.filter(p => statusOf(data.projects, p.id, "Not started") === "Completed").length;
   const weekCount = weeklyPlan.filter(w => statusOf(data.weeks, w.week, "Not started") === "Completed").length;
   const readinessCount = readinessChecks.filter(c => data.readiness[c.id]?.passed).length;
   const progressPercent = Math.round(completedTopics / topics.length * 100);
-  const nextTopic = topics.find(t => statusOf(data.topics, t.id, "Not started") !== "Mastered");
+  const nextTopic = topics.find(t => topicStatus(t.id) !== "Mastered");
   const filteredResources = resources.filter(r => `${r.title} ${r.type} ${r.coverage} ${r.id}`.toLowerCase().includes(resourceQuery.toLowerCase()));
   const filteredGlossary = glossary.filter(g => `${g.term} ${g.meaning}`.toLowerCase().includes(glossaryQuery.toLowerCase()));
 
