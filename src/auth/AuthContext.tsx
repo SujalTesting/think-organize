@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
-import { getSupabaseClient } from "../lib/supabase";
+import { getSupabaseClient, setAuthPersistence } from "../lib/supabase";
 
 export type Profile = {
   id: string;
@@ -18,11 +18,10 @@ type ProfileInput = { full_name: string; username: string; date_of_birth: string
 type AuthContextValue = {
   session: Session | null; user: User | null; profile: Profile | null;
   loading: boolean; profileLoading: boolean; configured: boolean;
-  signInWithGoogle: () => Promise<void>;
+  signInWithGoogle: (rememberMe: boolean) => Promise<void>;
   signUpWithEmail: (email: string, password: string, profile: ProfileInput) => Promise<string | null>;
-  signInWithEmail: (email: string, password: string) => Promise<void>;
-  signInWithUsername: (username: string, password: string) => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
+  signInWithEmail: (email: string, password: string, rememberMe: boolean) => Promise<void>;
+  updatePassword: (password: string) => Promise<void>;
   saveProfile: (profile: ProfileInput) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -75,8 +74,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => { active = false; data.subscription.unsubscribe(); };
   }, [supabase, fetchProfile]);
 
-  const signInWithGoogle = useCallback(async () => {
+  const signInWithGoogle = useCallback(async (rememberMe: boolean) => {
     if (!supabase) throw new Error("Supabase is not configured.");
+    setAuthPersistence(rememberMe);
     const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin, queryParams: { prompt: "select_account" } } });
     if (error) throw error;
   }, [supabase]);
@@ -93,27 +93,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return data.session ? null : "Check your email to confirm your account, then sign in.";
   }, [supabase, fetchProfile]);
 
-  const signInWithEmail = useCallback(async (email: string, password: string) => {
+  const signInWithEmail = useCallback(async (email: string, password: string, rememberMe: boolean) => {
     if (!supabase) throw new Error("Supabase is not configured.");
+    setAuthPersistence(rememberMe);
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     if (error) throw error;
   }, [supabase]);
 
-  const signInWithUsername = useCallback(async (username: string, password: string) => {
-    if (!supabase) throw new Error("Supabase is not configured.");
-    const { data, error } = await supabase.functions.invoke("username-login", { body: { username: username.trim(), password } });
-    if (error) throw new Error("Username sign-in is not deployed yet. Please sign in with email or deploy the username-login function.");
-    if (data?.error) throw new Error(data.error);
-    if (!data?.access_token || !data?.refresh_token) throw new Error("Invalid username or password.");
-    const { error: sessionError } = await supabase.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token });
-    if (sessionError) throw sessionError;
-  }, [supabase]);
-
-  const resetPassword = useCallback(async (email: string) => {
-    if (!supabase) throw new Error("Supabase is not configured.");
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: window.location.origin });
+  const updatePassword = useCallback(async (password: string) => {
+    if (!supabase || !session?.user.id) throw new Error("Sign in before changing your password.");
+    const { error } = await supabase.auth.updateUser({ password });
     if (error) throw error;
-  }, [supabase]);
+  }, [supabase, session?.user.id]);
 
   const saveProfile = useCallback(async (p: ProfileInput) => {
     if (!supabase || !session?.user.id) throw new Error("Sign in before saving your profile.");
@@ -129,7 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
   }, [supabase]);
 
-  const value = useMemo<AuthContextValue>(() => ({ session, user: session?.user ?? null, profile, loading, profileLoading, configured: Boolean(supabase), signInWithGoogle, signUpWithEmail, signInWithEmail, signInWithUsername, resetPassword, saveProfile, signOut, refreshProfile }), [session, profile, loading, profileLoading, supabase, signInWithGoogle, signUpWithEmail, signInWithEmail, signInWithUsername, resetPassword, saveProfile, signOut, refreshProfile]);
+  const value = useMemo<AuthContextValue>(() => ({ session, user: session?.user ?? null, profile, loading, profileLoading, configured: Boolean(supabase), signInWithGoogle, signUpWithEmail, signInWithEmail, saveProfile, signOut, refreshProfile }), [session, profile, loading, profileLoading, supabase, signInWithGoogle, signUpWithEmail, signInWithEmail, saveProfile, signOut, refreshProfile]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
