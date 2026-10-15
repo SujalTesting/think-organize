@@ -68,3 +68,10 @@
 .account-edit-overlay .account-panel{margin:auto;box-shadow:0 24px 80px rgba(15,25,15,.22)}
 
 .profile-view-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:22px 0}.profile-view-field{display:flex;flex-direction:column;gap:6px;padding:13px;border:1px solid #e5e9e1;border-radius:9px;background:#fbfcfa;min-width:0}.profile-view-field span{font-size:9px;color:#859080;font-weight:600;text-transform:uppercase;letter-spacing:.6px}.profile-view-field strong{font-size:12px;color:#334735;overflow-wrap:anywhere;white-space:pre-wrap}.profile-view-bio{grid-column:1/-1}.profile-edit-action{margin-top:4px}.auth-bar{position:sticky;top:0;z-index:100}@media(max-width:540px){.profile-view-grid{grid-template-columns:1fr}.profile-view-bio{grid-column:auto}}
+
+/* Authentication preference and password settings */
+.account-form .remember-me-option{display:flex;flex-direction:row;align-items:center;gap:9px;font-size:12px;font-weight:500;color:#4b5349}
+.account-form .remember-me-option input{width:15px;height:15px;margin:0;accent-color:#3e5942;flex:0 0 auto}
+.password-settings{margin:22px 0;padding:18px;border:1px solid #e5e9e1;border-radius:10px;background:#fbfcfa}
+.password-settings h2{margin:0 0 8px;font-size:16px;color:#334735}
+.password-settings .account-form{margin-top:14px}
