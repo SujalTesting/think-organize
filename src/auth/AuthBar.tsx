@@ -23,6 +23,8 @@ export default function AuthBar() {
   const [fields, setFields] = useState<Fields>(emptyFields);
   const [editing, setEditing] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [editBaseline, setEditBaseline] = useState<Fields | null>(null);
+  const [confirmDiscardOpen, setConfirmDiscardOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -45,6 +47,40 @@ export default function AuthBar() {
     catch (error) { setErrorMessage(error instanceof Error ? error.message : "Something went wrong. Please try again."); }
     finally { setBusy(false); }
   }
+  function beginProfileEditing() {
+    const saved = fromProfile(profile, typeof user?.user_metadata?.full_name === "string" ? user.user_metadata.full_name : typeof user?.user_metadata?.name === "string" ? user.user_metadata.name : "");
+    setFields(saved);
+    setEditBaseline(saved);
+    setEditing(true);
+    setProfileOpen(true);
+    setConfirmDiscardOpen(false);
+    setMessage("");
+    setErrorMessage("");
+  }
+
+  function requestCloseProfileEditing() {
+    const baseline = editBaseline || fromProfile(profile);
+    const changed = (Object.keys(baseline) as (keyof Fields)[]).some(key => (fields[key] || "") !== (baseline[key] || ""));
+    if (changed) {
+      setConfirmDiscardOpen(true);
+      return;
+    }
+    setFields(baseline);
+    setEditing(false);
+    setProfileOpen(true);
+    setMessage("");
+    setErrorMessage("");
+  }
+
+  function discardProfileChanges() {
+    setFields(editBaseline || fromProfile(profile));
+    setEditing(false);
+    setProfileOpen(true);
+    setConfirmDiscardOpen(false);
+    setMessage("");
+    setErrorMessage("");
+  }
+
   function submitPasswordChange(event: FormEvent) {
     event.preventDefault();
     if (newPassword.length < 8) { setErrorMessage("Use at least 8 characters for your new password."); return; }
@@ -71,6 +107,9 @@ export default function AuthBar() {
         if (mode === "signup" && !user) return await signUpWithEmail(email, password, p);
         await saveProfile(p);
         setEditing(false);
+        setProfileOpen(true);
+        setEditBaseline(p);
+        setConfirmDiscardOpen(false);
         setMessage("Profile saved.");
       });
       return;
@@ -137,7 +176,7 @@ export default function AuthBar() {
             <p className="profile-side-email">{user.email || "Email unavailable"}</p>
             <div className="profile-side-divider" />
             <div className="profile-side-status"><span className="profile-status-dot" /> Account active</div>
-            <button className="account-primary" type="button" onClick={() => { setFields(fromProfile(profile)); setEditing(true); setProfileOpen(false); setMessage(""); setErrorMessage(""); }}>
+            <button className="account-primary" type="button" onClick={beginProfileEditing}>
               Edit personal information
             </button>
           </aside>
@@ -146,7 +185,7 @@ export default function AuthBar() {
             <section className="profile-section-card">
               <div className="profile-section-heading">
                 <div><p className="profile-section-eyebrow">PERSONAL INFORMATION</p><h2>Profile details</h2><p>These details help personalize your learning workspace.</p></div>
-                <button className="profile-inline-action" type="button" onClick={() => { setFields(fromProfile(profile)); setEditing(true); setProfileOpen(false); setMessage(""); setErrorMessage(""); }}>Edit profile</button>
+ 
               </div>
               <div className="profile-view-grid">{rows.map(([label, value]) => <div className="profile-view-field" key={label}><span>{label}</span><strong>{value}</strong></div>)}{profile?.bio?.trim() && <div className="profile-view-field profile-view-bio"><span>About me</span><strong>{profile.bio}</strong></div>}</div>
             </section>
@@ -181,7 +220,9 @@ export default function AuthBar() {
   if (!isProfileComplete || editing) {
     const nameFromGoogle = typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : typeof user.user_metadata?.name === "string" ? user.user_metadata.name : "";
     return <section className="account-screen account-page-shell"><div className="account-panel account-panel-wide">
-      <p className="account-kicker">COMPLETE YOUR PROFILE</p><h1>{isProfileComplete ? "Edit your profile." : "A few details first."}</h1>
+      {isProfileComplete && <div className="profile-edit-page-top"><div><p className="account-kicker">ACCOUNT MANAGEMENT</p><h1>Edit personal information</h1><p className="account-subtitle">Update your details. Your saved profile will remain unchanged until you save.</p></div><button type="button" className="profile-edit-close" aria-label="Close editing" onClick={requestCloseProfileEditing}>Close <span aria-hidden="true">×</span></button></div>}
+      {!isProfileComplete && <><p className="account-kicker">COMPLETE YOUR PROFILE</p><h1>A few details first.</h1></>}
+      
       <p className="account-subtitle">{isProfileComplete ? "Keep your profile information up to date." : "Please complete every required field before entering your learning workspace."}</p>
       <form onSubmit={submit} className="account-form">
         <label>Email address<input value={user.email || ""} readOnly /></label>
@@ -190,8 +231,9 @@ export default function AuthBar() {
         {errorMessage && <p className="account-error" role="alert">{errorMessage}</p>}{message && <p className="account-message" role="status">{message}</p>}
         <button className="account-primary" type="submit" disabled={busy}>{busy ? "Saving…" : isProfileComplete ? "Save profile" : "Save and continue"}</button>
       </form>
-      {isProfileComplete && <button className="account-link" onClick={() => { setEditing(false); setFields(emptyFields); setMessage(""); setErrorMessage(""); }}>Cancel editing</button>}
-      <button className="account-link" onClick={() => void run(signOut)}>Sign out</button>
+      {isProfileComplete && <button type="button" className="account-link" onClick={requestCloseProfileEditing}>Cancel editing</button>}
+      {!isProfileComplete && <button className="account-link" onClick={() => void run(signOut)}>Sign out</button>}
+      {confirmDiscardOpen && <div className="profile-discard-backdrop" role="presentation"><section className="profile-discard-dialog" role="alertdialog" aria-modal="true" aria-labelledby="discard-title" aria-describedby="discard-description"><div className="profile-discard-icon" aria-hidden="true">!</div><h2 id="discard-title">Discard unsaved changes?</h2><p id="discard-description">You have changes that haven't been saved. Would you like to keep editing or discard them? Your previously saved profile will not be changed.</p><div className="profile-discard-actions"><button type="button" className="profile-keep-editing" onClick={() => setConfirmDiscardOpen(false)}>Keep editing</button><button type="button" className="profile-discard-changes" onClick={discardProfileChanges}>Discard changes</button></div></section></div>}
     </div></section>;
   }
 
