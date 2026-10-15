@@ -52,6 +52,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshProfile = useCallback(async () => { await fetchProfile(session?.user.id); }, [fetchProfile, session?.user.id]);
 
   useEffect(() => {
+    if (!supabase || !session) return;
+    if (window.localStorage.getItem("learning-lab-auth-persistence") !== "remember") return;
+    const expiresAt = Number(window.localStorage.getItem("learning-lab-auth-expiry") || 0);
+    if (!expiresAt) return;
+    const remaining = expiresAt - Date.now();
+    if (remaining <= 0) {
+      void supabase.auth.signOut();
+      return;
+    }
+    const timeout = window.setTimeout(() => { void supabase.auth.signOut(); }, remaining);
+    return () => window.clearTimeout(timeout);
+  }, [supabase, session?.access_token]);
+
+  useEffect(() => {
     if (!supabase) { setLoading(false); return; }
     let active = true;
     void supabase.auth.getSession().then(({ data, error }) => {
@@ -120,7 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
   }, [supabase]);
 
-  const value = useMemo<AuthContextValue>(() => ({ session, user: session?.user ?? null, profile, loading, profileLoading, configured: Boolean(supabase), signInWithGoogle, signUpWithEmail, signInWithEmail, saveProfile, signOut, refreshProfile }), [session, profile, loading, profileLoading, supabase, signInWithGoogle, signUpWithEmail, signInWithEmail, saveProfile, signOut, refreshProfile]);
+  const value = useMemo<AuthContextValue>(() => ({ session, user: session?.user ?? null, profile, loading, profileLoading, configured: Boolean(supabase), signInWithGoogle, signUpWithEmail, signInWithEmail, updatePassword, saveProfile, signOut, refreshProfile }), [session, profile, loading, profileLoading, supabase, signInWithGoogle, signUpWithEmail, signInWithEmail, updatePassword, saveProfile, signOut, refreshProfile]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
