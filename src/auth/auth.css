@@ -68,3 +68,93 @@
 .account-edit-overlay .account-panel{margin:auto;box-shadow:0 24px 80px rgba(15,25,15,.22)}
 
 .profile-view-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:22px 0}.profile-view-field{display:flex;flex-direction:column;gap:6px;padding:13px;border:1px solid #e5e9e1;border-radius:9px;background:#fbfcfa;min-width:0}.profile-view-field span{font-size:9px;color:#859080;font-weight:600;text-transform:uppercase;letter-spacing:.6px}.profile-view-field strong{font-size:12px;color:#334735;overflow-wrap:anywhere;white-space:pre-wrap}.profile-view-bio{grid-column:1/-1}.profile-edit-action{margin-top:4px}.auth-bar{position:sticky;top:0;z-index:100}@media(max-width:540px){.profile-view-grid{grid-template-columns:1fr}.profile-view-bio{grid-column:auto}}
+
+/* Authentication preference and password settings */
+.account-form .remember-me-option{display:flex;flex-direction:row;align-items:center;gap:9px;font-size:12px;font-weight:500;color:#4b5349}
+.account-form .remember-me-option input{width:15px;height:15px;margin:0;accent-color:#3e5942;flex:0 0 auto}
+.password-settings{margin:22px 0;padding:18px;border:1px solid #e5e9e1;border-radius:10px;background:#fbfcfa}
+.password-settings h2{margin:0 0 8px;font-size:16px;color:#334735}
+.password-settings .account-form{margin-top:14px}
+
+
+/* Full-page account and profile management */
+.profile-page-shell{box-sizing:border-box;min-height:calc(100vh - 68px);padding:clamp(24px,4vw,48px) clamp(18px,5vw,64px) 56px;background:#f6f7f3;color:#263126;font-family:"DM Sans",system-ui,sans-serif}
+.profile-page-header{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;max-width:1240px;margin:0 auto 28px}
+.profile-page-header h1{margin:7px 0 8px;font:750 clamp(27px,3vw,36px)/1.18 Manrope,system-ui,sans-serif;letter-spacing:-1px;color:#263b29}
+.profile-page-header .account-subtitle{max-width:600px;margin:0}
+.profile-back-button{display:inline-flex;align-items:center;gap:8px;flex-shrink:0;padding:11px 14px;border:1px solid #dce3d8;border-radius:9px;background:#fff;color:#3d5740;font:600 12px "DM Sans",system-ui,sans-serif;cursor:pointer}
+.profile-back-button:hover,.profile-inline-action:hover{background:#f0f4ed;border-color:#bacbb4}
+.profile-page-layout{display:grid;grid-template-columns:minmax(220px,280px) minmax(0,1fr);align-items:start;gap:22px;max-width:1240px;margin:0 auto}
+.profile-side-card,.profile-section-card{min-width:0;background:#fff;border:1px solid #e2e7de;border-radius:15px;box-shadow:0 4px 18px rgba(34,49,32,.035)}
+.profile-side-card{position:sticky;top:92px;padding:25px 21px;text-align:center}
+.profile-avatar{display:grid;place-items:center;width:72px;height:72px;margin:0 auto 15px;border-radius:22px;background:#e8efe4;color:#38553a;font:750 29px Manrope,system-ui,sans-serif}
+.profile-side-card h2{margin:0;font:750 18px Manrope,system-ui,sans-serif;color:#2d432f;overflow-wrap:anywhere}
+.profile-side-username{margin:7px 0 4px;color:#5d7958;font-size:12px;font-weight:650}
+.profile-side-email{margin:0;color:#858c80;font-size:11px;overflow-wrap:anywhere;line-height:1.6}
+.profile-side-divider{height:1px;margin:22px 0 16px;background:#edf0e9}
+.profile-side-status{display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:20px;color:#5d6c59;font-size:11px}
+.profile-status-dot{width:7px;height:7px;border-radius:50%;background:#6b9c60;box-shadow:0 0 0 3px #eaf3e6}
+.profile-side-card .account-primary{font-size:11px}
+.profile-page-content{display:grid;gap:18px;min-width:0}
+.profile-section-card{padding:clamp(18px,2.5vw,28px)}
+.profile-section-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;padding-bottom:20px;border-bottom:1px solid #edf0e9}
+.profile-section-eyebrow{margin:0 0 7px;color:#83917b;font-size:9px;font-weight:800;letter-spacing:1.35px}
+.profile-section-heading h2,.profile-session-card h2{margin:0 0 7px;color:#2c432e;font:750 19px Manrope,system-ui,sans-serif;letter-spacing:-.3px}
+.profile-section-heading p:not(.profile-section-eyebrow),.profile-session-card p:not(.profile-section-eyebrow){margin:0;color:#7a8175;font-size:12px;line-height:1.65}
+.profile-inline-action{flex-shrink:0;padding:9px 12px;border:1px solid #d9e2d4;border-radius:8px;background:#fff;color:#3e5942;font:700 11px "DM Sans",system-ui,sans-serif;cursor:pointer}
+.profile-page-shell .profile-view-grid{gap:12px;margin:20px 0 0}
+.profile-page-shell .profile-view-field{padding:14px 15px;border-color:#e9ede5;border-radius:9px;background:#fcfdfa}
+.profile-page-shell .profile-view-field span{font-size:9px;letter-spacing:.75px}
+.profile-page-shell .profile-view-field strong{font-size:12px;line-height:1.6}
+.profile-security-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:10px;background:#edf3e9;color:#466346;font-size:24px}
+.profile-security-row{display:flex;align-items:center;justify-content:space-between;gap:20px;padding-top:20px}
+.profile-security-row>div{min-width:0}
+.profile-security-row strong{display:block;color:#354b35;font-size:12px}
+.profile-security-row p{margin:6px 0 0;color:#7c8478;font-size:11px;line-height:1.65}
+.profile-provider-pill{flex-shrink:0;padding:6px 10px;border:1px solid #e2e8dd;border-radius:99px;background:#f7faf5;color:#526a4e;font-size:10px;font-weight:700}
+.profile-password-form{max-width:560px;margin-top:20px}
+.profile-form-actions{display:flex;align-items:center;gap:12px;margin-top:2px}
+.profile-form-actions .account-primary{width:auto;min-width:160px}
+.profile-cancel-action{padding:10px 12px;border:0;background:transparent;color:#5d6c59;font:650 11px "DM Sans",system-ui,sans-serif;cursor:pointer}
+.profile-session-card{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.profile-session-card p strong{color:#425b40;overflow-wrap:anywhere}
+.profile-signout-button{flex-shrink:0;padding:10px 14px;border:1px solid #ead9d6;border-radius:8px;background:#fff;color:#9a4339;font:700 11px "DM Sans",system-ui,sans-serif;cursor:pointer}
+.profile-signout-button:hover{background:#fff7f6}
+.profile-signout-button:disabled{opacity:.6;cursor:wait}
+.account-page-shell{position:relative;min-height:calc(100vh - 68px);overflow:visible;background:#f6f7f3;backdrop-filter:none;padding-top:36px;padding-bottom:48px}
+.account-page-shell .account-panel{margin:0 auto;box-shadow:0 4px 18px rgba(34,49,32,.035)}
+.account-page-shell .account-panel-wide{width:min(100%,900px)}
+@media(max-width:850px){.profile-page-header{align-items:flex-start;flex-direction:column}.profile-back-button{align-self:flex-start}.profile-page-layout{grid-template-columns:minmax(0,1fr)}.profile-side-card{position:static;display:grid;grid-template-columns:64px minmax(0,1fr);column-gap:15px;align-items:center;text-align:left;padding:18px}.profile-avatar{grid-row:1/4;width:58px;height:58px;margin:0;border-radius:17px;font-size:23px}.profile-side-card h2{align-self:end;font-size:16px}.profile-side-username{margin:3px 0}.profile-side-email{align-self:start}.profile-side-divider{display:none}.profile-side-status{grid-column:1/-1;justify-content:flex-start;margin:16px 0 12px}.profile-side-card .account-primary{grid-column:1/-1}}
+@media(max-width:540px){.profile-page-shell{padding:24px 14px 36px}.profile-page-header{margin-bottom:20px}.profile-page-header h1{font-size:28px}.profile-section-card{padding:17px}.profile-section-heading{flex-direction:column;gap:14px}.profile-page-shell .profile-view-grid{grid-template-columns:1fr}.profile-page-shell .profile-view-bio{grid-column:auto}.profile-security-row,.profile-session-card{align-items:flex-start;flex-direction:column}.profile-form-actions{align-items:stretch;flex-direction:column}.profile-form-actions .account-primary{width:100%}.profile-cancel-action{align-self:center}.account-page-shell{padding-top:24px}}
+
+/* Treat account/profile views as workspace pages, not dialogs over the app */
+#root:has(.profile-page-shell)>*:not(.profile-page-shell),
+#root:has(.account-page-shell)>*:not(.account-page-shell){display:none}
+
+
+/* Profile edit screen: aligned header, clear close action, and unsaved-change guard */
+.account-page-shell .profile-edit-page-top{display:flex;align-items:flex-start;justify-content:space-between;gap:22px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid #e8ece4}
+.account-page-shell .profile-edit-page-top .account-kicker{margin:0 0 8px}
+.account-page-shell .profile-edit-page-top h1{margin:0 0 8px;color:#263b29;font:750 clamp(25px,3vw,32px)/1.2 Manrope,system-ui,sans-serif;letter-spacing:-.7px}
+.account-page-shell .profile-edit-page-top .account-subtitle{margin:0;max-width:580px}
+.profile-edit-close{display:inline-flex;align-items:center;gap:12px;flex-shrink:0;padding:9px 13px;border:1px solid #dce3d8;border-radius:9px;background:#fff;color:#405840;font:650 12px "DM Sans",system-ui,sans-serif;cursor:pointer}
+.profile-edit-close span{font-size:19px;line-height:1}
+.profile-edit-close:hover{background:#f1f5ee;border-color:#bfceb8}
+.profile-discard-backdrop{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(24,34,25,.48);backdrop-filter:blur(3px)}
+.profile-discard-dialog{box-sizing:border-box;width:min(100%,430px);padding:28px;border:1px solid #e1e7dd;border-radius:16px;background:#fff;box-shadow:0 24px 70px rgba(20,31,21,.22);color:#2b3c2c}
+.profile-discard-icon{display:grid;place-items:center;width:38px;height:38px;margin-bottom:16px;border-radius:12px;background:#fff2dd;color:#9b681e;font-size:21px;font-weight:800}
+.profile-discard-dialog h2{margin:0 0 10px;font:750 20px/1.3 Manrope,system-ui,sans-serif;letter-spacing:-.3px}
+.profile-discard-dialog p{margin:0;color:#697366;font-size:13px;line-height:1.7}
+.profile-discard-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:10px;margin-top:24px}
+.profile-keep-editing,.profile-discard-changes{padding:11px 14px;border-radius:9px;font:700 12px "DM Sans",system-ui,sans-serif;cursor:pointer}
+.profile-keep-editing{border:1px solid #dce3d8;background:#fff;color:#3e5942}
+.profile-keep-editing:hover{background:#f3f6f0}
+.profile-discard-changes{border:1px solid #a94c42;background:#a94c42;color:#fff}
+.profile-discard-changes:hover{background:#8e3d35}
+@media(max-width:540px){.account-page-shell .profile-edit-page-top{gap:12px}.account-page-shell .profile-edit-page-top h1{font-size:25px}.profile-edit-close{padding:8px 10px;font-size:11px}.profile-discard-dialog{padding:22px}.profile-discard-actions{flex-direction:column-reverse}.profile-discard-actions button{width:100%}}
+
+/* Keep the profile page title, eyebrow, and supporting text in a clear vertical hierarchy */
+.profile-page-header>div{display:flex;flex-direction:column;align-items:flex-start;gap:0;min-width:0}
+.profile-page-header .account-kicker{display:block;margin:0 0 8px}
+.profile-page-header h1{display:block;width:100%;margin:0 0 8px}
+.profile-page-header .account-subtitle{display:block;width:100%;max-width:600px}

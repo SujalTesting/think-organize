@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useAuth, type Profile } from "./AuthContext";
 import "./auth.css";
 
-type Mode = "signin" | "signup" | "reset";
+type Mode = "signin" | "signup";
 type Fields = { full_name: string; username: string; date_of_birth: string; gender: string; country: string; state: string; city: string; bio: string };
 const emptyFields: Fields = { full_name: "", username: "", date_of_birth: "", gender: "", country: "", state: "", city: "", bio: "" };
 function fromProfile(p: Profile | null, name = ""): Fields {
@@ -12,19 +12,25 @@ function complete(p: Profile | null) { return Boolean(p?.full_name?.trim() && p.
 function ageFromDob(dob: string) { if (!dob) return null; const today = new Date(), birth = new Date(dob + "T12:00:00"); let age = today.getFullYear() - birth.getFullYear(); if (today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) age--; return age >= 0 ? age : null; }
 
 export default function AuthBar() {
-  const { user, profile, loading, profileLoading, configured, signInWithGoogle, signUpWithEmail, signInWithEmail, signInWithUsername, resetPassword, saveProfile, signOut } = useAuth();
+  const { user, profile, loading, profileLoading, configured, signInWithGoogle, signUpWithEmail, signInWithEmail, updatePassword, saveProfile, signOut } = useAuth();
   const [mode, setMode] = useState<Mode>("signin");
-  const [loginType, setLoginType] = useState<"email" | "username">("email");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fields, setFields] = useState<Fields>(emptyFields);
   const [editing, setEditing] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [editBaseline, setEditBaseline] = useState<Fields | null>(null);
+  const [confirmDiscardOpen, setConfirmDiscardOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const isProfileComplete = complete(profile);
+  const canChangePassword = user?.app_metadata?.provider === "email" || Boolean(user?.identities?.some(identity => identity.provider === "email"));
   const age = useMemo(() => ageFromDob(fields.date_of_birth), [fields.date_of_birth]);
   useEffect(() => {
     if (user && !editing && fields === emptyFields && !profileLoading) {
@@ -41,6 +47,53 @@ export default function AuthBar() {
     catch (error) { setErrorMessage(error instanceof Error ? error.message : "Something went wrong. Please try again."); }
     finally { setBusy(false); }
   }
+  function beginProfileEditing() {
+    const saved = fromProfile(profile, typeof user?.user_metadata?.full_name === "string" ? user.user_metadata.full_name : typeof user?.user_metadata?.name === "string" ? user.user_metadata.name : "");
+    setFields(saved);
+    setEditBaseline(saved);
+    setEditing(true);
+    setProfileOpen(true);
+    setConfirmDiscardOpen(false);
+    setMessage("");
+    setErrorMessage("");
+  }
+
+  function requestCloseProfileEditing() {
+    const baseline = editBaseline || fromProfile(profile);
+    const changed = (Object.keys(baseline) as (keyof Fields)[]).some(key => (fields[key] || "") !== (baseline[key] || ""));
+    if (changed) {
+      setConfirmDiscardOpen(true);
+      return;
+    }
+    setFields(baseline);
+    setEditing(false);
+    setProfileOpen(true);
+    setMessage("");
+    setErrorMessage("");
+  }
+
+  function discardProfileChanges() {
+    setFields(editBaseline || fromProfile(profile));
+    setEditing(false);
+    setProfileOpen(true);
+    setConfirmDiscardOpen(false);
+    setMessage("");
+    setErrorMessage("");
+  }
+
+  function submitPasswordChange(event: FormEvent) {
+    event.preventDefault();
+    if (newPassword.length < 8) { setErrorMessage("Use at least 8 characters for your new password."); return; }
+    if (newPassword !== confirmPassword) { setErrorMessage("The new passwords do not match."); return; }
+    void run(async () => {
+      await updatePassword(newPassword);
+      setNewPassword("");
+      setConfirmPassword("");
+      setChangePasswordOpen(false);
+      setMessage("Password updated successfully.");
+    });
+  }
+
   function submit(event: FormEvent) {
     event.preventDefault();
     if (mode === "signup" || (user && !isProfileComplete) || (user && editing)) {
@@ -54,41 +107,38 @@ export default function AuthBar() {
         if (mode === "signup" && !user) return await signUpWithEmail(email, password, p);
         await saveProfile(p);
         setEditing(false);
+        setProfileOpen(true);
+        setEditBaseline(p);
+        setConfirmDiscardOpen(false);
         setMessage("Profile saved.");
       });
       return;
     }
-    if (mode === "reset") {
-      if (!email.trim()) { setErrorMessage("Enter the email address for your account."); return; }
-      void run(async () => { await resetPassword(email); return "If an account uses that email, a password-reset link will be sent."; });
-      return;
-    }
     if (!password) { setErrorMessage("Enter your password."); return; }
-    void run(async () => {
-      if (loginType === "username") await signInWithUsername(email, password);
-      else await signInWithEmail(email, password);
-    });
+    if (!email.trim()) { setErrorMessage("Enter your email address."); return; }
+    void run(() => signInWithEmail(email, password, rememberMe));
   }
 
-  if (loading || (user && profileLoading && !profile)) return <div className="account-loading">Communication Lab · {loading ? "Checking your session…" : "Loading your profile…"}</div>;
+  if (loading || (user && profileLoading && !profile)) return <div className="account-loading">GenAI Learning Lab · {loading ? "Checking your session…" : "Loading your profile…"}</div>;
 
-  if (!configured) return <section className="account-screen"><div className="account-panel"><p className="account-kicker">COMMUNICATION LAB</p><h1>Account setup required</h1><p>Supabase environment variables must be configured before you can sign in or create an account.</p></div></section>;
+  if (!configured) return <section className="account-screen"><div className="account-panel"><p className="account-kicker">GENAI LEARNING LAB</p><h1>Account setup required</h1><p>Supabase environment variables must be configured before you can sign in or create an account.</p></div></section>;
 
   if (!user) return (
     <section className="account-screen"><div className="account-panel">
-      <p className="account-kicker">COMMUNICATION LAB</p>
-      <h1>{mode === "signup" ? "Create your account." : mode === "reset" ? "Reset your password." : "Welcome back."}</h1>
-      <p className="account-subtitle">{mode === "signup" ? "Create an account to save your learning progress across devices." : mode === "reset" ? "We'll send password-reset instructions to your email if an account matches." : "Sign in to continue your learning journey."}</p>
-      {mode === "signin" && <div className="auth-tabs"><button type="button" className={loginType === "email" ? "selected" : ""} onClick={() => setLoginType("email")}>Email</button><button type="button" className={loginType === "username" ? "selected" : ""} onClick={() => setLoginType("username")}>Username</button></div>}
+      <p className="account-kicker">GENAI LEARNING LAB</p>
+      <h1>{mode === "signup" ? "Create your account." : "Welcome back."}</h1>
+      <p className="account-subtitle">{mode === "signup" ? "Create an account to save your learning progress across devices." : "Sign in to continue your learning journey."}</p>
+
       <form onSubmit={submit} className="account-form">
         {mode === "signup" && <><label>Full name<input autoComplete="name" value={fields.full_name} onChange={e => update("full_name", e.target.value)} required /></label><label>Username<input autoComplete="username" minLength={3} maxLength={24} pattern="[A-Za-z0-9_]{3,24}" value={fields.username} onChange={e => update("username", e.target.value)} required /><small>3–24 letters, numbers or underscores. Usernames are unique.</small></label></>}
-        <label>{mode === "signin" && loginType === "username" ? "Username" : "Email address"}<input type={mode === "signin" && loginType === "username" ? "text" : "email"} autoComplete={mode === "signup" ? "email" : "username"} value={email} onChange={e => setEmail(e.target.value)} required /></label>
-        {mode !== "reset" && <label>Password<input type="password" autoComplete={mode === "signup" ? "new-password" : "current-password"} minLength={mode === "signup" ? 8 : undefined} value={password} onChange={e => setPassword(e.target.value)} required />{mode === "signup" && <small>Use at least 8 characters.</small>}</label>}
+        <label>Email address<input type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} required /></label>
+        <label>Password<input type="password" autoComplete={mode === "signup" ? "new-password" : "current-password"} minLength={mode === "signup" ? 8 : undefined} value={password} onChange={e => setPassword(e.target.value)} required />{mode === "signup" && <small>Use at least 8 characters.</small>}</label>
         {mode === "signup" && <ProfileFields fields={fields} update={update} age={age} includeBio={false} />}
+        {mode === "signin" && <label className="remember-me-option"><input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} /> Remember me for 7 days</label>}
         {errorMessage && <p className="account-error" role="alert">{errorMessage}</p>}{message && <p className="account-message" role="status">{message}</p>}
-        <button className="account-primary" disabled={busy} type="submit">{busy ? "Please wait…" : mode === "signup" ? "Create account" : mode === "reset" ? "Send reset link" : "Sign in"}</button>
+        <button className="account-primary" disabled={busy} type="submit">{busy ? "Please wait…" : mode === "signup" ? "Create account" : "Sign in"}</button>
       </form>
-      {mode === "signin" && <><div className="account-divider"><span>or</span></div><button className="account-google" disabled={busy} onClick={() => void run(signInWithGoogle)}>Continue with Google</button><button className="account-link" onClick={() => showMode("reset")}>Forgot password?</button><p className="account-switch">New to Communication Lab? <button onClick={() => { setFields(emptyFields); showMode("signup"); }}>Create an account</button></p></>}
+      {mode === "signin" && <><div className="account-divider"><span>or</span></div><button className="account-google" disabled={busy} onClick={() => void run(() => signInWithGoogle(rememberMe))}>Continue with Google</button><p className="account-switch">New to GenAI Learning Lab? <button onClick={() => { setFields(emptyFields); showMode("signup"); }}>Create an account</button></p></>}
       {mode !== "signin" && <p className="account-switch"><button onClick={() => showMode("signin")}>Back to sign in</button></p>}
     </div></section>
   );
@@ -97,25 +147,82 @@ export default function AuthBar() {
     const rows: [string, string][] = [
       ["Full name", profile?.full_name || "Not set"],
       ["Username", profile?.username || "Not set"],
-      ["Email", user.email || "Not available"],
+      ["Email address", user.email || "Not available"],
       ["Date of birth", profile?.date_of_birth || "Not set"],
       ["Gender", profile?.gender || "Not set"],
       ["Country", profile?.country || "Not set"],
       ["State / province", profile?.state || "Not set"],
       ["City", profile?.city || "Not set"],
     ];
-    return <section className="account-screen account-edit-overlay"><div className="account-panel account-panel-wide profile-view-panel">
-      <p className="account-kicker">YOUR ACCOUNT</p><h1>Your profile.</h1><p className="account-subtitle">Review your account details and keep your information up to date.</p>
-      <div className="profile-view-grid">{rows.map(([label, value]) => <div className="profile-view-field" key={label}><span>{label}</span><strong>{value}</strong></div>)}{profile?.bio?.trim() && <div className="profile-view-field profile-view-bio"><span>Bio</span><strong>{profile.bio}</strong></div>}</div>
-      <button className="account-primary profile-edit-action" onClick={() => { setFields(fromProfile(profile)); setEditing(true); setProfileOpen(false); setMessage(""); setErrorMessage(""); }}>Edit profile</button>
-      <button className="account-link" onClick={() => setProfileOpen(false)}>Close profile</button>
-    </div></section>;
+    const initials = (profile?.full_name || user.email || "Learner").trim().slice(0, 1).toUpperCase();
+    return (
+      <main className="profile-page-shell">
+        <header className="profile-page-header">
+          <div>
+            <p className="account-kicker">ACCOUNT MANAGEMENT</p>
+            <h1>Profile & settings</h1>
+            <p className="account-subtitle">Manage your personal information and account security in one place.</p>
+          </div>
+          <button className="profile-back-button" type="button" onClick={() => setProfileOpen(false)}>
+            <span aria-hidden="true">←</span> Back to learning workspace
+          </button>
+        </header>
+
+        <div className="profile-page-layout">
+          <aside className="profile-side-card">
+            <div className="profile-avatar" aria-hidden="true">{initials}</div>
+            <h2>{profile?.full_name || "Your profile"}</h2>
+            <p className="profile-side-username">@{profile?.username || "username-not-set"}</p>
+            <p className="profile-side-email">{user.email || "Email unavailable"}</p>
+            <div className="profile-side-divider" />
+            <div className="profile-side-status"><span className="profile-status-dot" /> Account active</div>
+            <button className="account-primary" type="button" onClick={beginProfileEditing}>
+              Edit personal information
+            </button>
+          </aside>
+
+          <div className="profile-page-content">
+            <section className="profile-section-card">
+              <div className="profile-section-heading">
+                <div><p className="profile-section-eyebrow">PERSONAL INFORMATION</p><h2>Profile details</h2><p>These details help personalize your learning workspace.</p></div>
+ 
+              </div>
+              <div className="profile-view-grid">{rows.map(([label, value]) => <div className="profile-view-field" key={label}><span>{label}</span><strong>{value}</strong></div>)}{profile?.bio?.trim() && <div className="profile-view-field profile-view-bio"><span>About me</span><strong>{profile.bio}</strong></div>}</div>
+            </section>
+
+            <section className="profile-section-card">
+              <div className="profile-section-heading">
+                <div><p className="profile-section-eyebrow">ACCOUNT SECURITY</p><h2>Password & sign-in</h2><p>Keep your account secure and manage your sign-in credentials.</p></div>
+                <span className="profile-security-icon" aria-hidden="true">⌑</span>
+              </div>
+              {canChangePassword ? (
+                !changePasswordOpen ? <div className="profile-security-row"><div><strong>Email password</strong><p>Update the password used to sign in with your email address.</p></div><button className="profile-inline-action" type="button" onClick={() => { setChangePasswordOpen(true); setMessage(""); setErrorMessage(""); }}>Change password</button></div> :
+                <form className="account-form profile-password-form" onSubmit={submitPasswordChange}>
+                  <label>New password<input type="password" autoComplete="new-password" minLength={8} value={newPassword} onChange={e => setNewPassword(e.target.value)} required /><small>Use at least 8 characters.</small></label>
+                  <label>Confirm new password<input type="password" autoComplete="new-password" minLength={8} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required /></label>
+                  {errorMessage && <p className="account-error" role="alert">{errorMessage}</p>}
+                  {message && <p className="account-message" role="status">{message}</p>}
+                  <div className="profile-form-actions"><button className="account-primary" type="submit" disabled={busy}>{busy ? "Updating…" : "Update password"}</button><button className="profile-cancel-action" type="button" onClick={() => { setChangePasswordOpen(false); setNewPassword(""); setConfirmPassword(""); setErrorMessage(""); setMessage(""); }}>Cancel</button></div>
+                </form>
+              ) : <div className="profile-security-row"><div><strong>Google sign-in</strong><p>This account signs in through Google. Password management is handled by your Google account.</p></div><span className="profile-provider-pill">Google</span></div>}
+            </section>
+
+            <section className="profile-section-card profile-session-card">
+              <div><p className="profile-section-eyebrow">SESSION</p><h2>Current account</h2><p>You are signed in as <strong>{user.email || profile?.username || "learner"}</strong>.</p></div>
+              <button className="profile-signout-button" type="button" disabled={busy} onClick={() => void run(signOut)}>{busy ? "Please wait…" : "Sign out"}</button>
+            </section>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   if (!isProfileComplete || editing) {
     const nameFromGoogle = typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : typeof user.user_metadata?.name === "string" ? user.user_metadata.name : "";
-    return <section className="account-screen account-edit-overlay"><div className="account-panel account-panel-wide">
-      <p className="account-kicker">COMPLETE YOUR PROFILE</p><h1>{isProfileComplete ? "Edit your profile." : "A few details first."}</h1>
+    return <section className="account-screen account-page-shell"><div className="account-panel account-panel-wide">
+      {isProfileComplete && <div className="profile-edit-page-top"><div><p className="account-kicker">ACCOUNT MANAGEMENT</p><h1>Edit personal information</h1><p className="account-subtitle">Update your details. Your saved profile will remain unchanged until you save.</p></div><button type="button" className="profile-edit-close" aria-label="Close editing" onClick={requestCloseProfileEditing}>Close <span aria-hidden="true">×</span></button></div>}
+      {!isProfileComplete && <><p className="account-kicker">COMPLETE YOUR PROFILE</p><h1>A few details first.</h1></>}
+      
       <p className="account-subtitle">{isProfileComplete ? "Keep your profile information up to date." : "Please complete every required field before entering your learning workspace."}</p>
       <form onSubmit={submit} className="account-form">
         <label>Email address<input value={user.email || ""} readOnly /></label>
@@ -124,8 +231,9 @@ export default function AuthBar() {
         {errorMessage && <p className="account-error" role="alert">{errorMessage}</p>}{message && <p className="account-message" role="status">{message}</p>}
         <button className="account-primary" type="submit" disabled={busy}>{busy ? "Saving…" : isProfileComplete ? "Save profile" : "Save and continue"}</button>
       </form>
-      {isProfileComplete && <button className="account-link" onClick={() => { setEditing(false); setFields(emptyFields); setMessage(""); setErrorMessage(""); }}>Cancel editing</button>}
-      <button className="account-link" onClick={() => void run(signOut)}>Sign out</button>
+      {isProfileComplete && <button type="button" className="account-link" onClick={requestCloseProfileEditing}>Cancel editing</button>}
+      {!isProfileComplete && <button className="account-link" onClick={() => void run(signOut)}>Sign out</button>}
+      {confirmDiscardOpen && <div className="profile-discard-backdrop" role="presentation"><section className="profile-discard-dialog" role="alertdialog" aria-modal="true" aria-labelledby="discard-title" aria-describedby="discard-description"><div className="profile-discard-icon" aria-hidden="true">!</div><h2 id="discard-title">Discard unsaved changes?</h2><p id="discard-description">You have changes that haven't been saved. Would you like to keep editing or discard them? Your previously saved profile will not be changed.</p><div className="profile-discard-actions"><button type="button" className="profile-keep-editing" onClick={() => setConfirmDiscardOpen(false)}>Keep editing</button><button type="button" className="profile-discard-changes" onClick={discardProfileChanges}>Discard changes</button></div></section></div>}
     </div></section>;
   }
 
