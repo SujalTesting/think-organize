@@ -130,3 +130,25 @@
 /* Treat account/profile views as workspace pages, not dialogs over the app */
 #root:has(.profile-page-shell)>*:not(.profile-page-shell),
 #root:has(.account-page-shell)>*:not(.account-page-shell){display:none}
+
+
+/* Profile edit screen: aligned header, clear close action, and unsaved-change guard */
+.account-page-shell .profile-edit-page-top{display:flex;align-items:flex-start;justify-content:space-between;gap:22px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid #e8ece4}
+.account-page-shell .profile-edit-page-top .account-kicker{margin:0 0 8px}
+.account-page-shell .profile-edit-page-top h1{margin:0 0 8px;color:#263b29;font:750 clamp(25px,3vw,32px)/1.2 Manrope,system-ui,sans-serif;letter-spacing:-.7px}
+.account-page-shell .profile-edit-page-top .account-subtitle{margin:0;max-width:580px}
+.profile-edit-close{display:inline-flex;align-items:center;gap:12px;flex-shrink:0;padding:9px 13px;border:1px solid #dce3d8;border-radius:9px;background:#fff;color:#405840;font:650 12px "DM Sans",system-ui,sans-serif;cursor:pointer}
+.profile-edit-close span{font-size:19px;line-height:1}
+.profile-edit-close:hover{background:#f1f5ee;border-color:#bfceb8}
+.profile-discard-backdrop{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(24,34,25,.48);backdrop-filter:blur(3px)}
+.profile-discard-dialog{box-sizing:border-box;width:min(100%,430px);padding:28px;border:1px solid #e1e7dd;border-radius:16px;background:#fff;box-shadow:0 24px 70px rgba(20,31,21,.22);color:#2b3c2c}
+.profile-discard-icon{display:grid;place-items:center;width:38px;height:38px;margin-bottom:16px;border-radius:12px;background:#fff2dd;color:#9b681e;font-size:21px;font-weight:800}
+.profile-discard-dialog h2{margin:0 0 10px;font:750 20px/1.3 Manrope,system-ui,sans-serif;letter-spacing:-.3px}
+.profile-discard-dialog p{margin:0;color:#697366;font-size:13px;line-height:1.7}
+.profile-discard-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:10px;margin-top:24px}
+.profile-keep-editing,.profile-discard-changes{padding:11px 14px;border-radius:9px;font:700 12px "DM Sans",system-ui,sans-serif;cursor:pointer}
+.profile-keep-editing{border:1px solid #dce3d8;background:#fff;color:#3e5942}
+.profile-keep-editing:hover{background:#f3f6f0}
+.profile-discard-changes{border:1px solid #a94c42;background:#a94c42;color:#fff}
+.profile-discard-changes:hover{background:#8e3d35}
+@media(max-width:540px){.account-page-shell .profile-edit-page-top{gap:12px}.account-page-shell .profile-edit-page-top h1{font-size:25px}.profile-edit-close{padding:8px 10px;font-size:11px}.profile-discard-dialog{padding:22px}.profile-discard-actions{flex-direction:column-reverse}.profile-discard-actions button{width:100%}}
