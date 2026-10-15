@@ -108,36 +108,79 @@ export default function AuthBar() {
     const rows: [string, string][] = [
       ["Full name", profile?.full_name || "Not set"],
       ["Username", profile?.username || "Not set"],
-      ["Email", user.email || "Not available"],
+      ["Email address", user.email || "Not available"],
       ["Date of birth", profile?.date_of_birth || "Not set"],
       ["Gender", profile?.gender || "Not set"],
       ["Country", profile?.country || "Not set"],
       ["State / province", profile?.state || "Not set"],
       ["City", profile?.city || "Not set"],
     ];
-    return <section className="account-screen account-edit-overlay"><div className="account-panel account-panel-wide profile-view-panel">
-      <p className="account-kicker">YOUR ACCOUNT</p><h1>Your profile.</h1><p className="account-subtitle">Review your account details and keep your information up to date.</p>
-      <div className="profile-view-grid">{rows.map(([label, value]) => <div className="profile-view-field" key={label}><span>{label}</span><strong>{value}</strong></div>)}{profile?.bio?.trim() && <div className="profile-view-field profile-view-bio"><span>Bio</span><strong>{profile.bio}</strong></div>}</div>
-      {canChangePassword && <section className="password-settings">
-        <h2>Change password</h2>
-        <p className="account-subtitle">Choose a new password for signing in with your email address.</p>
-        {!changePasswordOpen ? <button className="account-link" onClick={() => { setChangePasswordOpen(true); setMessage(""); setErrorMessage(""); }}>Change password</button> : <form className="account-form" onSubmit={submitPasswordChange}>
-          <label>New password<input type="password" autoComplete="new-password" minLength={8} value={newPassword} onChange={e => setNewPassword(e.target.value)} required /></label>
-          <label>Confirm new password<input type="password" autoComplete="new-password" minLength={8} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required /></label>
-          {errorMessage && <p className="account-error" role="alert">{errorMessage}</p>}
-          {message && <p className="account-message" role="status">{message}</p>}
-          <button className="account-primary" type="submit" disabled={busy}>{busy ? "Updating…" : "Update password"}</button>
-          <button className="account-link" type="button" onClick={() => { setChangePasswordOpen(false); setNewPassword(""); setConfirmPassword(""); setErrorMessage(""); setMessage(""); }}>Cancel</button>
-        </form>}
-      </section>}
-      <button className="account-primary profile-edit-action" onClick={() => { setFields(fromProfile(profile)); setEditing(true); setProfileOpen(false); setMessage(""); setErrorMessage(""); }}>Edit profile</button>
-      <button className="account-link" onClick={() => setProfileOpen(false)}>Close profile</button>
-    </div></section>;
+    const initials = (profile?.full_name || user.email || "Learner").trim().slice(0, 1).toUpperCase();
+    return (
+      <main className="profile-page-shell">
+        <header className="profile-page-header">
+          <div>
+            <p className="account-kicker">ACCOUNT MANAGEMENT</p>
+            <h1>Profile & settings</h1>
+            <p className="account-subtitle">Manage your personal information and account security in one place.</p>
+          </div>
+          <button className="profile-back-button" type="button" onClick={() => setProfileOpen(false)}>
+            <span aria-hidden="true">←</span> Back to learning workspace
+          </button>
+        </header>
+
+        <div className="profile-page-layout">
+          <aside className="profile-side-card">
+            <div className="profile-avatar" aria-hidden="true">{initials}</div>
+            <h2>{profile?.full_name || "Your profile"}</h2>
+            <p className="profile-side-username">@{profile?.username || "username-not-set"}</p>
+            <p className="profile-side-email">{user.email || "Email unavailable"}</p>
+            <div className="profile-side-divider" />
+            <div className="profile-side-status"><span className="profile-status-dot" /> Account active</div>
+            <button className="account-primary" type="button" onClick={() => { setFields(fromProfile(profile)); setEditing(true); setProfileOpen(false); setMessage(""); setErrorMessage(""); }}>
+              Edit personal information
+            </button>
+          </aside>
+
+          <div className="profile-page-content">
+            <section className="profile-section-card">
+              <div className="profile-section-heading">
+                <div><p className="profile-section-eyebrow">PERSONAL INFORMATION</p><h2>Profile details</h2><p>These details help personalize your learning workspace.</p></div>
+                <button className="profile-inline-action" type="button" onClick={() => { setFields(fromProfile(profile)); setEditing(true); setProfileOpen(false); setMessage(""); setErrorMessage(""); }}>Edit profile</button>
+              </div>
+              <div className="profile-view-grid">{rows.map(([label, value]) => <div className="profile-view-field" key={label}><span>{label}</span><strong>{value}</strong></div>)}{profile?.bio?.trim() && <div className="profile-view-field profile-view-bio"><span>About me</span><strong>{profile.bio}</strong></div>}</div>
+            </section>
+
+            <section className="profile-section-card">
+              <div className="profile-section-heading">
+                <div><p className="profile-section-eyebrow">ACCOUNT SECURITY</p><h2>Password & sign-in</h2><p>Keep your account secure and manage your sign-in credentials.</p></div>
+                <span className="profile-security-icon" aria-hidden="true">⌑</span>
+              </div>
+              {canChangePassword ? (
+                !changePasswordOpen ? <div className="profile-security-row"><div><strong>Email password</strong><p>Update the password used to sign in with your email address.</p></div><button className="profile-inline-action" type="button" onClick={() => { setChangePasswordOpen(true); setMessage(""); setErrorMessage(""); }}>Change password</button></div> :
+                <form className="account-form profile-password-form" onSubmit={submitPasswordChange}>
+                  <label>New password<input type="password" autoComplete="new-password" minLength={8} value={newPassword} onChange={e => setNewPassword(e.target.value)} required /><small>Use at least 8 characters.</small></label>
+                  <label>Confirm new password<input type="password" autoComplete="new-password" minLength={8} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required /></label>
+                  {errorMessage && <p className="account-error" role="alert">{errorMessage}</p>}
+                  {message && <p className="account-message" role="status">{message}</p>}
+                  <div className="profile-form-actions"><button className="account-primary" type="submit" disabled={busy}>{busy ? "Updating…" : "Update password"}</button><button className="profile-cancel-action" type="button" onClick={() => { setChangePasswordOpen(false); setNewPassword(""); setConfirmPassword(""); setErrorMessage(""); setMessage(""); }}>Cancel</button></div>
+                </form>
+              ) : <div className="profile-security-row"><div><strong>Google sign-in</strong><p>This account signs in through Google. Password management is handled by your Google account.</p></div><span className="profile-provider-pill">Google</span></div>}
+            </section>
+
+            <section className="profile-section-card profile-session-card">
+              <div><p className="profile-section-eyebrow">SESSION</p><h2>Current account</h2><p>You are signed in as <strong>{user.email || profile?.username || "learner"}</strong>.</p></div>
+              <button className="profile-signout-button" type="button" disabled={busy} onClick={() => void run(signOut)}>{busy ? "Please wait…" : "Sign out"}</button>
+            </section>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   if (!isProfileComplete || editing) {
     const nameFromGoogle = typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : typeof user.user_metadata?.name === "string" ? user.user_metadata.name : "";
-    return <section className="account-screen account-edit-overlay"><div className="account-panel account-panel-wide">
+    return <section className="account-screen account-page-shell"><div className="account-panel account-panel-wide">
       <p className="account-kicker">COMPLETE YOUR PROFILE</p><h1>{isProfileComplete ? "Edit your profile." : "A few details first."}</h1>
       <p className="account-subtitle">{isProfileComplete ? "Keep your profile information up to date." : "Please complete every required field before entering your learning workspace."}</p>
       <form onSubmit={submit} className="account-form">
