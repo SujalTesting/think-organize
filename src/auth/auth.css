@@ -152,3 +152,9 @@
 .profile-discard-changes{border:1px solid #a94c42;background:#a94c42;color:#fff}
 .profile-discard-changes:hover{background:#8e3d35}
 @media(max-width:540px){.account-page-shell .profile-edit-page-top{gap:12px}.account-page-shell .profile-edit-page-top h1{font-size:25px}.profile-edit-close{padding:8px 10px;font-size:11px}.profile-discard-dialog{padding:22px}.profile-discard-actions{flex-direction:column-reverse}.profile-discard-actions button{width:100%}}
+
+/* Keep the profile page title, eyebrow, and supporting text in a clear vertical hierarchy */
+.profile-page-header>div{display:flex;flex-direction:column;align-items:flex-start;gap:0;min-width:0}
+.profile-page-header .account-kicker{display:block;margin:0 0 8px}
+.profile-page-header h1{display:block;width:100%;margin:0 0 8px}
+.profile-page-header .account-subtitle{display:block;width:100%;max-width:600px}
