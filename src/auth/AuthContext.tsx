@@ -78,40 +78,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const dedupeKey = "login-activity:" + userId + ":" + lastSignInAt;
             if (window.sessionStorage.getItem(dedupeKey)) return;
 
-            // Resolve the approximate location of the current public IP. The provider sees
-            // the visitor's IP address; we do not store the IP itself in login_activity.
-            // Location lookup is best-effort: it must never prevent a successful sign-in.
-            let ipLocation: { country_name?: string; region?: string; city?: string; timezone?: string } | null = null;
-            try {
-              const response = await fetch("https://ipapi.co/json/", { signal: AbortSignal.timeout(5000) });
-              if (response.ok) {
-                const result = await response.json() as {
-                  error?: boolean;
-                  country_name?: string;
-                  region?: string;
-                  city?: string;
-                  timezone?: string;
-                };
-                if (!result.error) ipLocation = result;
-              } else {
-                console.warn("IP location lookup returned HTTP status:", response.status);
-              }
-            } catch (locationError) {
-              console.warn("IP location lookup failed; recording login without a detected location:", locationError);
-            }
+            const { data: locationProfile, error: profileError } = await supabase
+              .from("profiles")
+              .select("country,state,city")
+              .eq("id", userId)
+              .maybeSingle();
+            if (profileError) console.warn("Could not load profile location for login activity:", profileError.message);
 
-            const country = ipLocation?.country_name?.trim() || null;
-            const region = ipLocation?.region?.trim() || null;
-            const city = ipLocation?.city?.trim() || null;
-            const hasIpLocation = Boolean(country || region || city);
             const { error: insertError } = await supabase.from("login_activity").insert({
               user_id: userId,
-              country,
-              region,
-              city,
-              time_zone: ipLocation?.timezone?.trim() || Intl.DateTimeFormat().resolvedOptions().timeZone || null,
+              country: locationProfile?.country || null,
+              region: locationProfile?.state || null,
+              city: locationProfile?.city || null,
+              time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone || null,
               locale: typeof navigator !== "undefined" ? navigator.language || null : null,
-              location_source: hasIpLocation ? "ip" : "not_provided",
+              location_source: locationProfile?.country || locationProfile?.state || locationProfile?.city ? "profile" : "not_provided",
             });
             if (insertError) {
               console.warn("Login activity was not recorded. Apply the login_activity migration and check RLS:", insertError.message);
