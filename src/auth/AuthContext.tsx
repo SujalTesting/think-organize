@@ -58,10 +58,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!expiresAt) return;
     const remaining = expiresAt - Date.now();
     if (remaining <= 0) {
-      void supabase.auth.signOut();
+      void supabase.auth.signOut({ scope: "local" });
       return;
     }
-    const timeout = window.setTimeout(() => { void supabase.auth.signOut(); }, remaining);
+    const timeout = window.setTimeout(() => { void supabase.auth.signOut({ scope: "local" }); }, remaining);
     return () => window.clearTimeout(timeout);
   }, [supabase, session?.access_token]);
 
