@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useAuth, type Profile } from "./AuthContext";
 import "./auth.css";
 
-type Mode = "signin" | "signup" | "reset";
+type Mode = "signin" | "signup";
 type Fields = { full_name: string; username: string; date_of_birth: string; gender: string; country: string; state: string; city: string; bio: string };
 const emptyFields: Fields = { full_name: "", username: "", date_of_birth: "", gender: "", country: "", state: "", city: "", bio: "" };
 function fromProfile(p: Profile | null, name = ""): Fields {
@@ -12,9 +12,12 @@ function complete(p: Profile | null) { return Boolean(p?.full_name?.trim() && p.
 function ageFromDob(dob: string) { if (!dob) return null; const today = new Date(), birth = new Date(dob + "T12:00:00"); let age = today.getFullYear() - birth.getFullYear(); if (today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) age--; return age >= 0 ? age : null; }
 
 export default function AuthBar() {
-  const { user, profile, loading, profileLoading, configured, signInWithGoogle, signUpWithEmail, signInWithEmail, signInWithUsername, resetPassword, saveProfile, signOut } = useAuth();
+  const { user, profile, loading, profileLoading, configured, signInWithGoogle, signUpWithEmail, signInWithEmail, updatePassword, saveProfile, signOut } = useAuth();
   const [mode, setMode] = useState<Mode>("signin");
-  const [loginType, setLoginType] = useState<"email" | "username">("email");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fields, setFields] = useState<Fields>(emptyFields);
@@ -25,6 +28,7 @@ export default function AuthBar() {
   const [errorMessage, setErrorMessage] = useState("");
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const isProfileComplete = complete(profile);
+  const canChangePassword = user?.app_metadata?.provider === "email" || Boolean(user?.identities?.some(identity => identity.provider === "email"));
   const age = useMemo(() => ageFromDob(fields.date_of_birth), [fields.date_of_birth]);
   useEffect(() => {
     if (user && !editing && fields === emptyFields && !profileLoading) {
@@ -41,6 +45,19 @@ export default function AuthBar() {
     catch (error) { setErrorMessage(error instanceof Error ? error.message : "Something went wrong. Please try again."); }
     finally { setBusy(false); }
   }
+  function submitPasswordChange(event: FormEvent) {
+    event.preventDefault();
+    if (newPassword.length < 8) { setErrorMessage("Use at least 8 characters for your new password."); return; }
+    if (newPassword !== confirmPassword) { setErrorMessage("The new passwords do not match."); return; }
+    void run(async () => {
+      await updatePassword(newPassword);
+      setNewPassword("");
+      setConfirmPassword("");
+      setChangePasswordOpen(false);
+      setMessage("Password updated successfully.");
+    });
+  }
+
   function submit(event: FormEvent) {
     event.preventDefault();
     if (mode === "signup" || (user && !isProfileComplete) || (user && editing)) {
@@ -58,37 +75,31 @@ export default function AuthBar() {
       });
       return;
     }
-    if (mode === "reset") {
-      if (!email.trim()) { setErrorMessage("Enter the email address for your account."); return; }
-      void run(async () => { await resetPassword(email); return "If an account uses that email, a password-reset link will be sent."; });
-      return;
-    }
     if (!password) { setErrorMessage("Enter your password."); return; }
-    void run(async () => {
-      if (loginType === "username") await signInWithUsername(email, password);
-      else await signInWithEmail(email, password);
-    });
+    if (!email.trim()) { setErrorMessage("Enter your email address."); return; }
+    void run(() => signInWithEmail(email, password, rememberMe));
   }
 
-  if (loading || (user && profileLoading && !profile)) return <div className="account-loading">Communication Lab · {loading ? "Checking your session…" : "Loading your profile…"}</div>;
+  if (loading || (user && profileLoading && !profile)) return <div className="account-loading">GenAI Learning Lab · {loading ? "Checking your session…" : "Loading your profile…"}</div>;
 
-  if (!configured) return <section className="account-screen"><div className="account-panel"><p className="account-kicker">COMMUNICATION LAB</p><h1>Account setup required</h1><p>Supabase environment variables must be configured before you can sign in or create an account.</p></div></section>;
+  if (!configured) return <section className="account-screen"><div className="account-panel"><p className="account-kicker">GENAI LEARNING LAB</p><h1>Account setup required</h1><p>Supabase environment variables must be configured before you can sign in or create an account.</p></div></section>;
 
   if (!user) return (
     <section className="account-screen"><div className="account-panel">
-      <p className="account-kicker">COMMUNICATION LAB</p>
-      <h1>{mode === "signup" ? "Create your account." : mode === "reset" ? "Reset your password." : "Welcome back."}</h1>
-      <p className="account-subtitle">{mode === "signup" ? "Create an account to save your learning progress across devices." : mode === "reset" ? "We'll send password-reset instructions to your email if an account matches." : "Sign in to continue your learning journey."}</p>
-      {mode === "signin" && <div className="auth-tabs"><button type="button" className={loginType === "email" ? "selected" : ""} onClick={() => setLoginType("email")}>Email</button><button type="button" className={loginType === "username" ? "selected" : ""} onClick={() => setLoginType("username")}>Username</button></div>}
+      <p className="account-kicker">GENAI LEARNING LAB</p>
+      <h1>{mode === "signup" ? "Create your account." : "Welcome back."}</h1>
+      <p className="account-subtitle">{mode === "signup" ? "Create an account to save your learning progress across devices." : "Sign in to continue your learning journey."}</p>
+
       <form onSubmit={submit} className="account-form">
         {mode === "signup" && <><label>Full name<input autoComplete="name" value={fields.full_name} onChange={e => update("full_name", e.target.value)} required /></label><label>Username<input autoComplete="username" minLength={3} maxLength={24} pattern="[A-Za-z0-9_]{3,24}" value={fields.username} onChange={e => update("username", e.target.value)} required /><small>3–24 letters, numbers or underscores. Usernames are unique.</small></label></>}
-        <label>{mode === "signin" && loginType === "username" ? "Username" : "Email address"}<input type={mode === "signin" && loginType === "username" ? "text" : "email"} autoComplete={mode === "signup" ? "email" : "username"} value={email} onChange={e => setEmail(e.target.value)} required /></label>
-        {mode !== "reset" && <label>Password<input type="password" autoComplete={mode === "signup" ? "new-password" : "current-password"} minLength={mode === "signup" ? 8 : undefined} value={password} onChange={e => setPassword(e.target.value)} required />{mode === "signup" && <small>Use at least 8 characters.</small>}</label>}
+        <label>Email address<input type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} required /></label>
+        <label>Password<input type="password" autoComplete={mode === "signup" ? "new-password" : "current-password"} minLength={mode === "signup" ? 8 : undefined} value={password} onChange={e => setPassword(e.target.value)} required />{mode === "signup" && <small>Use at least 8 characters.</small>}</label>
         {mode === "signup" && <ProfileFields fields={fields} update={update} age={age} includeBio={false} />}
+        {mode === "signin" && <label className="remember-me-option"><input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} /> Remember me for 7 days</label>}
         {errorMessage && <p className="account-error" role="alert">{errorMessage}</p>}{message && <p className="account-message" role="status">{message}</p>}
-        <button className="account-primary" disabled={busy} type="submit">{busy ? "Please wait…" : mode === "signup" ? "Create account" : mode === "reset" ? "Send reset link" : "Sign in"}</button>
+        <button className="account-primary" disabled={busy} type="submit">{busy ? "Please wait…" : mode === "signup" ? "Create account" : "Sign in"}</button>
       </form>
-      {mode === "signin" && <><div className="account-divider"><span>or</span></div><button className="account-google" disabled={busy} onClick={() => void run(signInWithGoogle)}>Continue with Google</button><button className="account-link" onClick={() => showMode("reset")}>Forgot password?</button><p className="account-switch">New to Communication Lab? <button onClick={() => { setFields(emptyFields); showMode("signup"); }}>Create an account</button></p></>}
+      {mode === "signin" && <><div className="account-divider"><span>or</span></div><button className="account-google" disabled={busy} onClick={() => void run(() => signInWithGoogle(rememberMe))}>Continue with Google</button><p className="account-switch">New to GenAI Learning Lab? <button onClick={() => { setFields(emptyFields); showMode("signup"); }}>Create an account</button></p></>}
       {mode !== "signin" && <p className="account-switch"><button onClick={() => showMode("signin")}>Back to sign in</button></p>}
     </div></section>
   );
@@ -107,6 +118,18 @@ export default function AuthBar() {
     return <section className="account-screen account-edit-overlay"><div className="account-panel account-panel-wide profile-view-panel">
       <p className="account-kicker">YOUR ACCOUNT</p><h1>Your profile.</h1><p className="account-subtitle">Review your account details and keep your information up to date.</p>
       <div className="profile-view-grid">{rows.map(([label, value]) => <div className="profile-view-field" key={label}><span>{label}</span><strong>{value}</strong></div>)}{profile?.bio?.trim() && <div className="profile-view-field profile-view-bio"><span>Bio</span><strong>{profile.bio}</strong></div>}</div>
+      {canChangePassword && <section className="password-settings">
+        <h2>Change password</h2>
+        <p className="account-subtitle">Choose a new password for signing in with your email address.</p>
+        {!changePasswordOpen ? <button className="account-link" onClick={() => { setChangePasswordOpen(true); setMessage(""); setErrorMessage(""); }}>Change password</button> : <form className="account-form" onSubmit={submitPasswordChange}>
+          <label>New password<input type="password" autoComplete="new-password" minLength={8} value={newPassword} onChange={e => setNewPassword(e.target.value)} required /></label>
+          <label>Confirm new password<input type="password" autoComplete="new-password" minLength={8} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required /></label>
+          {errorMessage && <p className="account-error" role="alert">{errorMessage}</p>}
+          {message && <p className="account-message" role="status">{message}</p>}
+          <button className="account-primary" type="submit" disabled={busy}>{busy ? "Updating…" : "Update password"}</button>
+          <button className="account-link" type="button" onClick={() => { setChangePasswordOpen(false); setNewPassword(""); setConfirmPassword(""); setErrorMessage(""); setMessage(""); }}>Cancel</button>
+        </form>}
+      </section>}
       <button className="account-primary profile-edit-action" onClick={() => { setFields(fromProfile(profile)); setEditing(true); setProfileOpen(false); setMessage(""); setErrorMessage(""); }}>Edit profile</button>
       <button className="account-link" onClick={() => setProfileOpen(false)}>Close profile</button>
     </div></section>;
