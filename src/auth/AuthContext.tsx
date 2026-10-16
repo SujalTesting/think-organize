@@ -45,7 +45,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const { data, error } = await supabase.from("profiles").select("id,full_name,username,date_of_birth,gender,country,state,city,bio,learning_path").eq("id", id).maybeSingle();
       if (error) throw error;
-      setProfile(data as Profile | null);
+      let profileData = data;
+      const { data: authData } = await supabase.auth.getUser();
+      const metadataPath = authData.user?.id === id ? authData.user.user_metadata?.learning_path : null;
+      if (profileData && (metadataPath === "sdet-ai" || metadataPath === "genai-agentic-ai") && profileData.learning_path !== metadataPath) {
+        const { data: updatedProfile, error: pathError } = await supabase.from("profiles").update({ learning_path: metadataPath }).eq("id", id).select("id,full_name,username,date_of_birth,gender,country,state,city,bio,learning_path").maybeSingle();
+        if (!pathError && updatedProfile) profileData = updatedProfile;
+      }
+      setProfile(profileData as Profile | null);
     } catch (error) {
       console.error("Unable to load profile:", error);
       setProfile(null);
