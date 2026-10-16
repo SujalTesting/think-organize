@@ -3,10 +3,10 @@ import { useAuth, type Profile } from "./AuthContext";
 import "./auth.css";
 
 type Mode = "signin" | "signup";
-type Fields = { full_name: string; username: string; date_of_birth: string; gender: string; country: string; state: string; city: string; bio: string };
-const emptyFields: Fields = { full_name: "", username: "", date_of_birth: "", gender: "", country: "", state: "", city: "", bio: "" };
+type Fields = { full_name: string; username: string; date_of_birth: string; gender: string; country: string; state: string; city: string; bio: string; learning_path: "sdet-ai" | "genai-agentic-ai" };
+const emptyFields: Fields = { full_name: "", username: "", date_of_birth: "", gender: "", country: "", state: "", city: "", bio: "", learning_path: "genai-agentic-ai" };
 function fromProfile(p: Profile | null, name = ""): Fields {
-  return { full_name: p?.full_name || name, username: p?.username || "", date_of_birth: p?.date_of_birth || "", gender: p?.gender || "", country: p?.country || "", state: p?.state || "", city: p?.city || "", bio: p?.bio || "" };
+  return { full_name: p?.full_name || name, username: p?.username || "", date_of_birth: p?.date_of_birth || "", gender: p?.gender || "", country: p?.country || "", state: p?.state || "", city: p?.city || "", bio: p?.bio || "", learning_path: p?.learning_path || "genai-agentic-ai" };
 }
 function complete(p: Profile | null) { return Boolean(p?.full_name?.trim() && p.username?.trim() && p.date_of_birth && p.gender?.trim() && p.country?.trim() && p.state?.trim() && p.city?.trim()); }
 function ageFromDob(dob: string) { if (!dob) return null; const today = new Date(), birth = new Date(dob + "T12:00:00"); let age = today.getFullYear() - birth.getFullYear(); if (today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) age--; return age >= 0 ? age : null; }
@@ -97,7 +97,7 @@ export default function AuthBar() {
   function submit(event: FormEvent) {
     event.preventDefault();
     if (mode === "signup" || (user && !isProfileComplete) || (user && editing)) {
-      if (!fields.full_name.trim() || !/^[A-Za-z0-9_]{3,24}$/.test(fields.username) || !fields.date_of_birth || !fields.gender || !fields.country.trim() || !fields.state.trim() || !fields.city.trim()) {
+      if (!fields.full_name.trim() || !/^[A-Za-z0-9_]{3,24}$/.test(fields.username) || !fields.date_of_birth || !fields.gender || !fields.country.trim() || !fields.state.trim() || !fields.city.trim() || !["sdet-ai", "genai-agentic-ai"].includes(fields.learning_path)) {
         setErrorMessage("Complete every required field. Username must be 3–24 letters, numbers or underscores."); return;
       }
       const ageNow = ageFromDob(fields.date_of_birth);
@@ -133,7 +133,7 @@ export default function AuthBar() {
         {mode === "signup" && <><label>Full name<input autoComplete="name" value={fields.full_name} onChange={e => update("full_name", e.target.value)} required /></label><label>Username<input autoComplete="username" minLength={3} maxLength={24} pattern="[A-Za-z0-9_]{3,24}" value={fields.username} onChange={e => update("username", e.target.value)} required /><small>3–24 letters, numbers or underscores. Usernames are unique.</small></label></>}
         <label>Email address<input type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} required /></label>
         <label>Password<input type="password" autoComplete={mode === "signup" ? "new-password" : "current-password"} minLength={mode === "signup" ? 8 : undefined} value={password} onChange={e => setPassword(e.target.value)} required />{mode === "signup" && <small>Use at least 8 characters.</small>}</label>
-        {mode === "signup" && <ProfileFields fields={fields} update={update} age={age} includeBio={false} />}
+        {mode === "signup" && <LearningPathPicker value={fields.learning_path} onChange={value => update("learning_path", value)} /><ProfileFields fields={fields} update={update} age={age} includeBio={false} />}
         {mode === "signin" && <label className="remember-me-option"><input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} /> Remember me for 7 days</label>}
         {errorMessage && <p className="account-error" role="alert">{errorMessage}</p>}{message && <p className="account-message" role="status">{message}</p>}
         <button className="account-primary" disabled={busy} type="submit">{busy ? "Please wait…" : mode === "signup" ? "Create account" : "Sign in"}</button>
@@ -239,6 +239,8 @@ export default function AuthBar() {
 
   return <section className="auth-bar" aria-label="Account"><div className="workspace-brand-lockup"><div className="workspace-brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M16 4.5 25.5 10v12L16 27.5 6.5 22V10z" fill="none" stroke="currentColor" strokeWidth="1.6"/><circle cx="16" cy="16" r="3.2" fill="currentColor"/><circle cx="16" cy="7.5" r="1.5" fill="#b8d4a9"/><circle cx="23.3" cy="20.2" r="1.5" fill="#b8d4a9"/><circle cx="8.7" cy="20.2" r="1.5" fill="#b8d4a9"/></svg></div><div><strong>GenAI Learning Lab</strong><small>Learn · Build · Evaluate</small></div></div><div className="auth-menu-wrap"><button type="button" className="auth-settings-button" aria-label="Account settings" aria-expanded={accountMenuOpen} onClick={() => setAccountMenuOpen(open => !open)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>{accountMenuOpen && <div className="auth-settings-menu"><button type="button" onClick={() => { setProfileOpen(true); setAccountMenuOpen(false); }}>Profile</button><button type="button" disabled={busy} onClick={() => { setAccountMenuOpen(false); void run(signOut); }}>{busy ? "Please wait…" : "Sign out"}</button></div>}</div></section>;
 }
+
+function LearningPathPicker({ value, onChange }: { value: "sdet-ai" | "genai-agentic-ai"; onChange: (value: "sdet-ai" | "genai-agentic-ai") => void }) { return <fieldset className="learning-path-picker"><legend>Which learning path would you like to start with?</legend><label className={`learning-path-option ${value === "sdet-ai" ? "selected" : ""}`}><input type="radio" name="learning_path" value="sdet-ai" checked={value === "sdet-ai"} onChange={() => onChange("sdet-ai")} /><span><strong>A. SDET + AI</strong><small>Software foundations, QA, Playwright, APIs, CI/CD and AI-assisted testing.</small></span></label><label className={`learning-path-option ${value === "genai-agentic-ai" ? "selected" : ""}`}><input type="radio" name="learning_path" value="genai-agentic-ai" checked={value === "genai-agentic-ai"} onChange={() => onChange("genai-agentic-ai")} /><span><strong>B. GenAI + AI Agents</strong><small>Continue with the existing GenAI, agent engineering, RAG and evaluation curriculum.</small></span></label></fieldset>; }
 
 function ProfileFields({ fields, update, age, includeUsername = false, includeBio }: { fields: Fields; update: <K extends keyof Fields>(key: K, value: Fields[K]) => void; age: number | null; includeUsername?: boolean; includeBio: boolean }) {
   const [genderOther, setGenderOther] = useState(false);
