@@ -227,6 +227,7 @@ export default function AuthBar() {
       <form onSubmit={submit} className="account-form">
         <label>Email address<input value={user.email || ""} readOnly /></label>
         <label>Full name<input autoComplete="name" value={fields.full_name || nameFromGoogle} onChange={e => update("full_name", e.target.value)} required /></label>
+        <LearningPathPicker value={fields.learning_path} onChange={value => update("learning_path", value)} />
         <ProfileFields fields={fields === emptyFields ? fromProfile(profile, nameFromGoogle) : fields} update={update} age={ageFromDob((fields === emptyFields ? fromProfile(profile, nameFromGoogle) : fields).date_of_birth)} includeUsername={!isProfileComplete} includeBio={isProfileComplete} />
         {errorMessage && <p className="account-error" role="alert">{errorMessage}</p>}{message && <p className="account-message" role="status">{message}</p>}
         <button className="account-primary" type="submit" disabled={busy}>{busy ? "Saving…" : isProfileComplete ? "Save profile" : "Save and continue"}</button>
