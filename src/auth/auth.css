@@ -158,3 +158,5 @@
 .profile-page-header .account-kicker{display:block;margin:0 0 8px}
 .profile-page-header h1{display:block;width:100%;margin:0 0 8px}
 .profile-page-header .account-subtitle{display:block;width:100%;max-width:600px}
+
+.learning-path-picker{border:1px solid #dfe7da;border-radius:11px;padding:14px;display:grid;gap:9px;margin:4px 0 15px;min-width:0}.learning-path-picker legend{font-size:12px;font-weight:800;color:#405840;padding:0 5px}.learning-path-option{display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid #e1e7dd;border-radius:9px;background:#fff;cursor:pointer}.learning-path-option.selected{border-color:#85a77b;background:#f1f7ed}.learning-path-option input{margin-top:3px;accent-color:#52794b}.learning-path-option span{display:grid;gap:5px}.learning-path-option strong{font-size:12px;color:#405a40}.learning-path-option small{font-size:10px;line-height:1.6;color:#7d8978;font-weight:400}

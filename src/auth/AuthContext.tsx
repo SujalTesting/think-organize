@@ -2,6 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import type { Session, User } from "@supabase/supabase-js";
 import { getSupabaseClient, setAuthPersistence } from "../lib/supabase";
 
+export type LearningPath = "sdet-ai" | "genai-agentic-ai";
+
 export type Profile = {
   id: string;
   full_name: string | null;
@@ -12,9 +14,10 @@ export type Profile = {
   state: string | null;
   city: string | null;
   bio: string;
+  learning_path: LearningPath | null;
 };
 
-type ProfileInput = { full_name: string; username: string; date_of_birth: string; gender: string; country: string; state: string; city: string; bio?: string };
+type ProfileInput = { full_name: string; username: string; date_of_birth: string; gender: string; country: string; state: string; city: string; bio?: string; learning_path?: LearningPath };
 type AuthContextValue = {
   session: Session | null; user: User | null; profile: Profile | null;
   loading: boolean; profileLoading: boolean; configured: boolean;
@@ -40,9 +43,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!supabase || !id) { setProfile(null); setProfileLoading(false); return; }
     setProfileLoading(true);
     try {
-      const { data, error } = await supabase.from("profiles").select("id,full_name,username,date_of_birth,gender,country,state,city,bio").eq("id", id).maybeSingle();
+      const { data, error } = await supabase.from("profiles").select("id,full_name,username,date_of_birth,gender,country,state,city,bio,learning_path").eq("id", id).maybeSingle();
       if (error) throw error;
-      setProfile(data as Profile | null);
+      let profileData = data;
+      const { data: authData } = await supabase.auth.getUser();
+      const metadataPath = authData.user?.id === id ? authData.user.user_metadata?.learning_path : null;
+      if (profileData && (metadataPath === "sdet-ai" || metadataPath === "genai-agentic-ai") && profileData.learning_path !== metadataPath) {
+        const { data: updatedProfile, error: pathError } = await supabase.from("profiles").update({ learning_path: metadataPath }).eq("id", id).select("id,full_name,username,date_of_birth,gender,country,state,city,bio,learning_path").maybeSingle();
+        if (!pathError && updatedProfile) profileData = updatedProfile;
+      }
+      setProfile(profileData as Profile | null);
     } catch (error) {
       console.error("Unable to load profile:", error);
       setProfile(null);
@@ -97,10 +107,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUpWithEmail = useCallback(async (email: string, password: string, p: ProfileInput) => {
     if (!supabase) throw new Error("Supabase is not configured.");
-    const { data, error } = await supabase.auth.signUp({ email: email.trim(), password, options: { emailRedirectTo: window.location.origin, data: { full_name: p.full_name, username: p.username, date_of_birth: p.date_of_birth, gender: p.gender, country: p.country, state: p.state, city: p.city } } });
+    const { data, error } = await supabase.auth.signUp({ email: email.trim(), password, options: { emailRedirectTo: window.location.origin, data: { full_name: p.full_name, username: p.username, date_of_birth: p.date_of_birth, gender: p.gender, country: p.country, state: p.state, city: p.city, learning_path: p.learning_path || "genai-agentic-ai" } } });
     if (error) throw error;
     if (data.session && data.user) {
-      const { error: profileError } = await supabase.from("profiles").upsert({ id: data.user.id, ...p, username: p.username.trim() }, { onConflict: "id" });
+      const { error: profileError } = await supabase.from("profiles").upsert({ id: data.user.id, ...p, learning_path: p.learning_path || "genai-agentic-ai", username: p.username.trim() }, { onConflict: "id" });
       if (profileError) throw profileError;
       await fetchProfile(data.user.id);
     }
@@ -122,11 +132,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const saveProfile = useCallback(async (p: ProfileInput) => {
     if (!supabase || !session?.user.id) throw new Error("Sign in before saving your profile.");
-    const values = { ...p, full_name: p.full_name.trim(), username: p.username.trim(), country: p.country.trim(), state: p.state.trim(), city: p.city.trim(), bio: (p.bio || "").trim() };
+    const values = { ...p, full_name: p.full_name.trim(), username: p.username.trim(), country: p.country.trim(), state: p.state.trim(), city: p.city.trim(), bio: (p.bio || "").trim(), learning_path: p.learning_path || profile?.learning_path || "genai-agentic-ai" };
     const { error } = await supabase.from("profiles").upsert({ id: session.user.id, ...values, updated_at: new Date().toISOString() }, { onConflict: "id" });
     if (error) throw error;
     await fetchProfile(session.user.id);
-  }, [supabase, session?.user.id, fetchProfile]);
+  }, [supabase, session?.user.id, fetchProfile, profile?.learning_path]);
 
   const signOut = useCallback(async () => {
     if (!supabase) throw new Error("Supabase is not configured.");
