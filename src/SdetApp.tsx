@@ -30,7 +30,7 @@ function normalize(value: unknown): Progress {
   return out;
 }
 export default function SdetApp() {
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile } = useAuth();
   const supabase = getSupabaseClient();
   const [progress, setProgress] = useState<Progress>({});
   const [loaded, setLoaded] = useState(false);
