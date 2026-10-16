@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import "./genai.css";
+import "./sdet.css";
 import { sdetLessons } from "./sdetCurriculum";
 import { useAuth } from "./auth/AuthContext";
 import { getSupabaseClient } from "./lib/supabase";
