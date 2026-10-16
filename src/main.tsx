@@ -1,6 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
+import SdetApp from "./SdetApp";
 import AuthBar from "./auth/AuthBar";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import "./styles.css";
@@ -13,7 +14,7 @@ function Workspace() {
       <AuthBar />
       {loading || (user && profileLoading && !profile) || (user && !profileComplete)
         ? null
-        : user ? <App /> : null}
+        : user ? (profile?.learning_path === "sdet-ai" ? <SdetApp /> : <App />) : null}
     </>
   );
 }
