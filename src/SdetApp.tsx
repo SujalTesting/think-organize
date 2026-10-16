@@ -35,7 +35,7 @@ export default function SdetApp() {
   const [progress, setProgress] = useState<Progress>({});
   const [loaded, setLoaded] = useState(false);
   const [selected, setSelected] = useState<number | null>(1);
-  const [tab, setTab] = useState<SdetTab>(() => { const hash = window.location.hash.replace(/^#\\/?/, ""); const route = hash.startsWith("day/") ? "roadmap" : hash; return navItems.some(([id]) => id === route) ? route as SdetTab : "dashboard"; });
+  const [tab, setTab] = useState<SdetTab>(() => { const hash = window.location.hash.replace(/^#\/?/, ""); const route = hash.startsWith("day/") ? "roadmap" : hash; return navItems.some(([id]) => id === route) ? route as SdetTab : "dashboard"; });
   const [query, setQuery] = useState("");
   const [week, setWeek] = useState("all");
   const [filter, setFilter] = useState("all");
