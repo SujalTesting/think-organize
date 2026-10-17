@@ -195,16 +195,14 @@ export default function AuthBar() {
                 <div><p className="profile-section-eyebrow">ACCOUNT SECURITY</p><h2>Password & sign-in</h2><p>Keep your account secure and manage your sign-in credentials.</p></div>
                 <span className="profile-security-icon" aria-hidden="true">⌑</span>
               </div>
-              {canChangePassword ? (
-                !changePasswordOpen ? <div className="profile-security-row"><div><strong>Learning-IT Lab password</strong><p>Set or update a password for signing in to Learning-IT Lab. This is separate from your Google account password.</p></div><button className="profile-inline-action" type="button" onClick={() => { setChangePasswordOpen(true); setMessage(""); setErrorMessage(""); }}>Change password</button></div> :
+              {!changePasswordOpen ? <div className="profile-security-row"><div><strong>Learning-IT Lab password</strong><p>Set or update a password for signing in to Learning-IT Lab. This is separate from your Google account password.</p></div><button className="profile-inline-action" type="button" onClick={() => { setChangePasswordOpen(true); setMessage(""); setErrorMessage(""); }}>Change password</button></div> :
                 <form className="account-form profile-password-form" onSubmit={submitPasswordChange}>
                   <label>New password<input type="password" autoComplete="new-password" minLength={8} value={newPassword} onChange={e => setNewPassword(e.target.value)} required /><small>Use at least 8 characters.</small></label>
                   <label>Confirm new password<input type="password" autoComplete="new-password" minLength={8} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required /></label>
                   {errorMessage && <p className="account-error" role="alert">{errorMessage}</p>}
                   {message && <p className="account-message" role="status">{message}</p>}
                   <div className="profile-form-actions"><button className="account-primary" type="submit" disabled={busy}>{busy ? "Updating…" : "Update password"}</button><button className="profile-cancel-action" type="button" onClick={() => { setChangePasswordOpen(false); setNewPassword(""); setConfirmPassword(""); setErrorMessage(""); setMessage(""); }}>Cancel</button></div>
-                </form>
-              ) : <div className="profile-security-row"><div><strong>Google sign-in</strong><p>This account signs in through Google. Password management is handled by your Google account.</p></div><span className="profile-provider-pill">Google</span></div>}
+                </form>}
             </section>
 
             <section className="profile-section-card profile-session-card">
