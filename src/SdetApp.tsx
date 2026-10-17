@@ -111,7 +111,14 @@ export default function SdetApp() {
         {tab === "dashboard" && <>
           <section className="sdet-hero">
             <div className="sdet-hero-copy"><p className="eyebrow">LEARNING PATH A · 10-WEEK JOURNEY</p><h1>QA / SDET <em>+ AI</em></h1><p>Build the engineering foundations behind reliable testing, then apply them to Playwright, APIs, CI/CD and responsible AI-assisted QA. Learn a concept, practise it, prove it, and record what you can actually do.</p><div className="sdet-hero-tags"><span>50 learning sessions</span><span>Practice-first</span><span>Evidence-based progress</span></div><button type="button" className="button-primary sdet-continue" onClick={() => setTab("roadmap")}>Continue learning <span>↗</span></button></div>
-            <div className="sdet-hero-stat"><strong>{Math.round(completed / sdetLessons.length * 100)}%</strong><span>journey completed</span><div className="progress-track"><i style={{ width: (completed / sdetLessons.length * 100) + "%" }} /></div><small>{completed} of {sdetLessons.length} sessions completed</small></div>
+            <div className="sdet-hero-actions" aria-label="Learning shortcuts">
+              <p className="eyebrow">YOUR LEARNING TOOLS</p>
+              <h2>What would you like to do next?</h2>
+              <p>Move forward with a session, review your weekly plan, or check the skills you can demonstrate.</p>
+              <button type="button" onClick={() => setTab("roadmap")}><span><b>Continue your roadmap</b><small>Study a lesson and record your proof of work</small></span><strong aria-hidden="true">↗</strong></button>
+              <button type="button" onClick={() => setTab("weekly")}><span><b>Review weekly plan</b><small>Consolidate this week's learning</small></span><strong aria-hidden="true">↗</strong></button>
+              <button type="button" onClick={() => setTab("readiness")}><span><b>Check readiness</b><small>Review progress against learning checkpoints</small></span><strong aria-hidden="true">↗</strong></button>
+            </div>
           </section>
           <div className="sdet-notice"><span aria-hidden="true">✦</span><div><strong>How to use this journey</strong><p>Do not mark a session complete just because you watched a video or copied code. Save evidence, explain the idea, and assess yourself honestly. If a topic takes more than one sitting, take the time you need.</p></div></div>
           <section className="sdet-summary-grid">
