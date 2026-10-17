@@ -77,3 +77,28 @@
 .sdet-app-shell .sdet-hero-actions>button small{font-size:9px;line-height:1.5;color:#7a8775}
 .sdet-app-shell .sdet-hero-actions>button>strong{font-size:15px;color:#668a5d;flex:0 0 auto}
 @media(max-width:760px){.sdet-app-shell .sdet-hero-actions{padding:18px}.sdet-app-shell .sdet-hero-actions h2{font-size:19px}}
+
+
+/* Beginner-first resource audit: direct lesson, fallback, video, playlist, practice */
+.sdet-app-shell .sdet-resource-detail{min-width:0}
+.sdet-app-shell .sdet-resource-detail .sdet-resource-link{display:flex;flex-direction:column;align-items:flex-start;gap:7px;padding:15px;border:1px solid #d9e5d3;border-radius:12px;background:#f7faf5;text-decoration:none}
+.sdet-app-shell .sdet-resource-detail .sdet-resource-label,
+.sdet-app-shell .sdet-resource-extra a>span{font-size:9px;font-weight:800;letter-spacing:.08em;color:#71896b}
+.sdet-app-shell .sdet-resource-detail .sdet-resource-link strong{font-size:13px;line-height:1.55;color:#314b35}
+.sdet-app-shell .sdet-resource-detail .sdet-resource-link>span:last-child{font-size:11px;color:#4e704c}
+.sdet-app-shell .sdet-resource-extra{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:12px}
+.sdet-app-shell .sdet-resource-extra a{display:flex;flex-direction:column;gap:7px;min-width:0;padding:12px;border:1px solid #e1e8dc;border-radius:10px;background:#fff;text-decoration:none}
+.sdet-app-shell .sdet-resource-extra a strong{font-size:11px;line-height:1.5;color:#344b36}
+.sdet-app-shell .sdet-resource-extra a small{font-size:10px;line-height:1.5;color:#788574}
+.sdet-app-shell .sdet-resource-exercise{margin-top:12px;padding:14px;border-radius:10px;background:#f4f6f0;border-left:3px solid #7f9a72}
+.sdet-app-shell .sdet-resource-exercise>strong{font-size:11px;color:#3c5d40}
+.sdet-app-shell .sdet-resource-exercise p{font-size:12px;line-height:1.7;color:#5e6d5b;margin:6px 0 0}
+.sdet-app-shell .sdet-audited-resource{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.sdet-app-shell .sdet-audited-resource>span{font-size:9px;font-weight:800;letter-spacing:.06em;color:#7a8b73}
+.sdet-app-shell .sdet-audited-resource>strong{font-size:14px;line-height:1.45}
+.sdet-app-shell .sdet-audited-resource>small{font-size:11px;line-height:1.6;color:#687765}
+.sdet-app-shell .sdet-resource-card-links{display:flex;flex-wrap:wrap;gap:7px}
+.sdet-app-shell .sdet-resource-card-links a{font-size:10px;font-weight:650;color:#426746;text-decoration:none;border:1px solid #dbe5d5;border-radius:6px;padding:6px 8px}
+.sdet-app-shell .sdet-audited-resource p{font-size:11px;line-height:1.65;color:#697765;margin:0}
+.sdet-app-shell .sdet-audited-resource button{border:0;background:transparent;color:#416b43;font:650 11px system-ui,sans-serif;padding:4px 0;cursor:pointer}
+@media(max-width:760px){.sdet-app-shell .sdet-resource-extra{grid-template-columns:1fr}.sdet-app-shell .sdet-resource-extra a{padding:13px}}
