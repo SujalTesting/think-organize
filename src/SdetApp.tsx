@@ -75,6 +75,7 @@ export default function SdetApp() {
   const completed = Object.values(progress).filter(x => x.status === "Completed").length;
   const filtered = useMemo(() => sdetLessons.filter(x => (week === "all" || String(x.week) === week) && (filter === "all" || (progress[String(x.day)]?.status || "Not started") === filter) && (x.title + " " + x.phase + " " + x.learn).toLowerCase().includes(query.toLowerCase())), [week, filter, query, progress]);
   const active = selected ? sdetLessons.find(x => x.day === selected) : null;
+  const nextSession = sdetLessons.find(x => progress[String(x.day)]?.status !== "Completed") || sdetLessons[0];
   function update(day: number, patch: Partial<Entry>) {
     setProgress(prev => ({ ...prev, [String(day)]: { ...blank(), ...prev[String(day)], ...patch } }));
   }
@@ -82,7 +83,7 @@ export default function SdetApp() {
   return <div className="sdet-workspace">
     <header className="sdet-hero">
       <div className="sdet-hero-copy"><p className="eyebrow">LEARNING PATH A · 10-WEEK JOURNEY</p><h1>QA / SDET <em>+ AI</em></h1><p>Build the engineering foundations behind reliable testing, then apply them to Playwright, APIs, CI/CD and responsible AI-assisted QA. Learn a concept, practise it, prove it, and record what you can actually do.</p><div className="sdet-hero-tags"><span>50 learning sessions</span><span>Practice-first</span><span>Evidence-based progress</span></div></div>
-      <div className="sdet-hero-stat"><strong>{Math.round(completed / sdetLessons.length * 100)}%</strong><span>journey completed</span><div className="progress-track"><i style={{ width: (completed / sdetLessons.length * 100) + "%" }} /></div><small>{completed} of {sdetLessons.length} sessions completed</small></div>
+      <div className="sdet-hero-action"><span className="sdet-hero-action-kicker">YOUR NEXT STEP</span><h2>{completed === sdetLessons.length ? "Journey complete" : "Ready to keep learning?"}</h2><p>{completed === sdetLessons.length ? "Review your evidence and reflect on what you can now do independently." : "Pick up with " + nextSession.title + " and keep building practical proof of your skills."}</p><button type="button" onClick={() => setSelected(nextSession.day)}>{completed === sdetLessons.length ? "Review final session" : "Continue learning"} <span aria-hidden="true">↗</span></button><small>{completed} of {sdetLessons.length} sessions completed</small></div>
     </header>
     <div className="sdet-notice"><span aria-hidden="true">✦</span><div><strong>How to use this journey</strong><p>Do not mark a session complete just because you watched a video or copied code. Save evidence, explain the idea, and assess yourself honestly. If a topic takes more than one sitting, take the time you need.</p></div></div>
     <section className="sdet-summary-grid">
