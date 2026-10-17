@@ -84,7 +84,7 @@ export default function SdetApp() {
     setProgress(prev => ({ ...prev, [String(day)]: { ...blank(), ...prev[String(day)], ...patch } }));
   }
   const weekNames = Array.from({ length: 10 }, (_, i) => ({ value: String(i + 1), label: "Week " + (i + 1) + " · " + sdetLessons[i * 5].phase }));
-  const resourceItems = sdetLessons.map(lesson => ({ lesson, guide: sdetResourceGuides.find(item => item.day === lesson.day) })).filter(item => item.guide);
+  const resourceItems = sdetLessons.flatMap(lesson => { const guide = sdetResourceGuides.find(item => item.day === lesson.day); return guide ? [{ lesson, guide }] : []; });
   const projectItems = sdetLessons.filter(lesson => /project|capstone|implement|build|workflow/i.test(lesson.title + " " + lesson.phase));
   const weeklyItems = Array.from({ length: 10 }, (_, index) => {
     const lessons = sdetLessons.filter(lesson => lesson.week === index + 1);
