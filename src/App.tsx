@@ -331,7 +331,7 @@ export default function App() {
           {data.journal.trim()&&<details className="legacy-journal"><summary>Earlier learning notes</summary><p>Your previous free-form note is preserved below. You can continue editing it or leave it as an archive.</p><textarea value={data.journal} onChange={e=>setData(current=>({...current,journal:e.target.value}))} rows={4}/></details>}
         </section>
       </div>
-      <footer><span>GENAI LEARNING LAB</span><span>Learn deliberately. Build responsibly. Verify with evidence.</span><span>{syncStatus === "synced" ? "All changes synced" : syncStatus === "error" ? "Cloud sync needs attention" : "Progress saves automatically"}</span></footer>
+      <footer><span>LEARNING-IT LAB</span><span>Learn deliberately. Build responsibly. Verify with evidence.</span><span>{syncStatus === "synced" ? "All changes synced" : syncStatus === "error" ? "Cloud sync needs attention" : "Progress saves automatically"}</span></footer>
     </main>
   </div>;
 }
