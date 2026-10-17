@@ -196,7 +196,7 @@ export default function AuthBar() {
                 <span className="profile-security-icon" aria-hidden="true">⌑</span>
               </div>
               {canChangePassword ? (
-                !changePasswordOpen ? <div className="profile-security-row"><div><strong>Email password</strong><p>Update the password used to sign in with your email address.</p></div><button className="profile-inline-action" type="button" onClick={() => { setChangePasswordOpen(true); setMessage(""); setErrorMessage(""); }}>Change password</button></div> :
+                !changePasswordOpen ? <div className="profile-security-row"><div><strong>Learning-IT Lab password</strong><p>Set or update a password for signing in to Learning-IT Lab. This is separate from your Google account password.</p></div><button className="profile-inline-action" type="button" onClick={() => { setChangePasswordOpen(true); setMessage(""); setErrorMessage(""); }}>Change password</button></div> :
                 <form className="account-form profile-password-form" onSubmit={submitPasswordChange}>
                   <label>New password<input type="password" autoComplete="new-password" minLength={8} value={newPassword} onChange={e => setNewPassword(e.target.value)} required /><small>Use at least 8 characters.</small></label>
                   <label>Confirm new password<input type="password" autoComplete="new-password" minLength={8} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required /></label>
