@@ -63,3 +63,17 @@
 .sdet-app-shell .sdet-footer{margin-top:26px}
 @media(max-width:1000px){.sdet-app-shell .sdet-resource-grid,.sdet-app-shell .sdet-week-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.sdet-app-shell .sdet-content{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
 @media(max-width:760px){.sdet-app-shell .sdet-workspace{padding:0 0 24px}.sdet-app-shell .sdet-hero{grid-template-columns:1fr;gap:20px;padding:23px;margin-bottom:18px}.sdet-app-shell .sdet-hero-stat{max-width:none;min-height:0}.sdet-app-shell .sdet-notice{margin-bottom:18px}.sdet-app-shell .sdet-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:22px}.sdet-app-shell .sdet-overview-next{align-items:flex-start;flex-direction:column;padding:21px}.sdet-app-shell .sdet-content{grid-template-columns:1fr}.sdet-app-shell .sdet-detail-column{grid-row:1}.sdet-app-shell .sdet-lesson-list{max-height:none;overflow:visible}.sdet-app-shell .sdet-resource-grid,.sdet-app-shell .sdet-week-grid{grid-template-columns:1fr}.sdet-app-shell .sdet-library-row{grid-template-columns:40px minmax(0,1fr)}.sdet-app-shell .sdet-library-row>b{grid-column:2}.sdet-app-shell .sdet-filters{grid-template-columns:1fr 1fr}.sdet-app-shell .sdet-filters input{grid-column:1/-1}}
+
+
+/* Overview shortcuts replace the redundant completion-stat card. */
+.sdet-app-shell .sdet-hero-actions{display:flex;flex-direction:column;align-items:stretch;gap:10px;min-width:0;padding:22px;background:#ffffffc9;border:1px solid #dfe8d9;border-radius:14px}
+.sdet-app-shell .sdet-hero-actions>.eyebrow{margin:0}
+.sdet-app-shell .sdet-hero-actions h2{font:700 clamp(17px,1.8vw,21px)/1.35 Manrope,system-ui,sans-serif;letter-spacing:-.45px;color:#304634;margin:0}
+.sdet-app-shell .sdet-hero-actions>p:not(.eyebrow){font-size:11px;line-height:1.7;color:#737970;margin:0 0 3px}
+.sdet-app-shell .sdet-hero-actions>button{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:12px 13px;text-align:left;background:#fff;border:1px solid #e2e9dc;border-radius:9px;color:#344b37;cursor:pointer;transition:background .15s,border-color .15s}
+.sdet-app-shell .sdet-hero-actions>button:hover{background:#f3f8ef;border-color:#b5cbaa}
+.sdet-app-shell .sdet-hero-actions>button>span{display:grid;gap:4px;min-width:0}
+.sdet-app-shell .sdet-hero-actions>button b{font-size:11px;font-weight:700}
+.sdet-app-shell .sdet-hero-actions>button small{font-size:9px;line-height:1.5;color:#7a8775}
+.sdet-app-shell .sdet-hero-actions>button>strong{font-size:15px;color:#668a5d;flex:0 0 auto}
+@media(max-width:760px){.sdet-app-shell .sdet-hero-actions{padding:18px}.sdet-app-shell .sdet-hero-actions h2{font-size:19px}}
