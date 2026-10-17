@@ -10,8 +10,8 @@ export const sdetLessons: SdetLesson[] = [
     "practice": "Practise map a web application with a small demo or synthetic dataset. Write down your prediction first, execute the exercise, inspect the result and explain any difference.",
     "proof": "Save a small artifact for Day 1: notes, diagram, test, report, script or evaluation result. Link the artifact in your progress record.",
     "assess": "Can you explain the concept in your own words, modify the example, apply it to a QA scenario and diagnose a simple failure? If not, record the gap and revisit it.",
-    "resource": "MDN web development",
-    "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development"
+    "resource": "The Odin Project — How the web works (free beginner lesson)",
+    "url": "https://www.theodinproject.com/lessons/foundations-how-does-the-web-work"
   },
   {
     "day": 2,
