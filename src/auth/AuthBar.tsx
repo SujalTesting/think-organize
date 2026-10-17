@@ -30,7 +30,6 @@ export default function AuthBar() {
   const [errorMessage, setErrorMessage] = useState("");
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const isProfileComplete = complete(profile);
-  const canChangePassword = true;
   const age = useMemo(() => ageFromDob(fields.date_of_birth), [fields.date_of_birth]);
   useEffect(() => {
     if (user && !editing && fields === emptyFields && !profileLoading) {
