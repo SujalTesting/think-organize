@@ -118,13 +118,13 @@ export default function AuthBar() {
     void run(() => signInWithEmail(email, password, rememberMe));
   }
 
-  if (loading || (user && profileLoading && !profile)) return <div className="account-loading">GenAI Learning Lab · {loading ? "Checking your session…" : "Loading your profile…"}</div>;
+  if (loading || (user && profileLoading && !profile)) return <div className="account-loading">Learning-IT Lab · {loading ? "Checking your session…" : "Loading your profile…"}</div>;
 
-  if (!configured) return <section className="account-screen"><div className="account-panel"><p className="account-kicker">GENAI LEARNING LAB</p><h1>Account setup required</h1><p>Supabase environment variables must be configured before you can sign in or create an account.</p></div></section>;
+  if (!configured) return <section className="account-screen"><div className="account-panel"><p className="account-kicker">LEARNING-IT LAB</p><h1>Account setup required</h1><p>Supabase environment variables must be configured before you can sign in or create an account.</p></div></section>;
 
   if (!user) return (
     <section className="account-screen"><div className="account-panel">
-      <p className="account-kicker">GENAI LEARNING LAB</p>
+      <p className="account-kicker">LEARNING-IT LAB</p>
       <h1>{mode === "signup" ? "Create your account." : "Welcome back."}</h1>
       <p className="account-subtitle">{mode === "signup" ? "Create an account to save your learning progress across devices." : "Sign in to continue your learning journey."}</p>
 
@@ -137,7 +137,7 @@ export default function AuthBar() {
         {errorMessage && <p className="account-error" role="alert">{errorMessage}</p>}{message && <p className="account-message" role="status">{message}</p>}
         <button className="account-primary" disabled={busy} type="submit">{busy ? "Please wait…" : mode === "signup" ? "Create account" : "Sign in"}</button>
       </form>
-      {mode === "signin" && <><div className="account-divider"><span>or</span></div><button className="account-google" disabled={busy} onClick={() => void run(() => signInWithGoogle(rememberMe))}>Continue with Google</button><p className="account-switch">New to GenAI Learning Lab? <button onClick={() => { setFields(emptyFields); showMode("signup"); }}>Create an account</button></p></>}
+      {mode === "signin" && <><div className="account-divider"><span>or</span></div><button className="account-google" disabled={busy} onClick={() => void run(() => signInWithGoogle(rememberMe))}>Continue with Google</button><p className="account-switch">New to Learning-IT Lab? <button onClick={() => { setFields(emptyFields); showMode("signup"); }}>Create an account</button></p></>}
       {mode !== "signin" && <p className="account-switch"><button onClick={() => showMode("signin")}>Back to sign in</button></p>}
     </div></section>
   );
@@ -235,7 +235,7 @@ export default function AuthBar() {
     </div></section>;
   }
 
-  return <section className="auth-bar" aria-label="Account"><div className="workspace-brand-lockup"><div className="workspace-brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M16 4.5 25.5 10v12L16 27.5 6.5 22V10z" fill="none" stroke="currentColor" strokeWidth="1.6"/><circle cx="16" cy="16" r="3.2" fill="currentColor"/><circle cx="16" cy="7.5" r="1.5" fill="#b8d4a9"/><circle cx="23.3" cy="20.2" r="1.5" fill="#b8d4a9"/><circle cx="8.7" cy="20.2" r="1.5" fill="#b8d4a9"/></svg></div><div><strong>GenAI Learning Lab</strong><small>Learn · Build · Evaluate</small></div></div><div className="auth-menu-wrap"><button type="button" className="auth-settings-button" aria-label="Account settings" aria-expanded={accountMenuOpen} onClick={() => setAccountMenuOpen(open => !open)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>{accountMenuOpen && <div className="auth-settings-menu"><button type="button" onClick={() => { setProfileOpen(true); setAccountMenuOpen(false); }}>Profile</button><button type="button" disabled={busy} onClick={() => { setAccountMenuOpen(false); void run(signOut); }}>{busy ? "Please wait…" : "Sign out"}</button></div>}</div></section>;
+  return <section className="auth-bar" aria-label="Account"><div className="workspace-brand-lockup"><div className="workspace-brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M16 4.5 25.5 10v12L16 27.5 6.5 22V10z" fill="none" stroke="currentColor" strokeWidth="1.6"/><circle cx="16" cy="16" r="3.2" fill="currentColor"/><circle cx="16" cy="7.5" r="1.5" fill="#b8d4a9"/><circle cx="23.3" cy="20.2" r="1.5" fill="#b8d4a9"/><circle cx="8.7" cy="20.2" r="1.5" fill="#b8d4a9"/></svg></div><div><strong>Learning-IT Lab</strong><small>Learn · Build · Evaluate</small></div></div><div className="auth-menu-wrap"><button type="button" className="auth-settings-button" aria-label="Account settings" aria-expanded={accountMenuOpen} onClick={() => setAccountMenuOpen(open => !open)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>{accountMenuOpen && <div className="auth-settings-menu"><button type="button" onClick={() => { setProfileOpen(true); setAccountMenuOpen(false); }}>Profile</button><button type="button" disabled={busy} onClick={() => { setAccountMenuOpen(false); void run(signOut); }}>{busy ? "Please wait…" : "Sign out"}</button></div>}</div></section>;
 }
 
 function LearningPathPicker({ value, onChange }: { value: "sdet-ai" | "genai-agentic-ai"; onChange: (value: "sdet-ai" | "genai-agentic-ai") => void }) { return <fieldset className="learning-path-picker"><legend>Which learning path would you like to start with?</legend><label className={`learning-path-option ${value === "sdet-ai" ? "selected" : ""}`}><input type="radio" name="learning_path" value="sdet-ai" checked={value === "sdet-ai"} onChange={() => onChange("sdet-ai")} /><span><strong>A. SDET + AI</strong><small>Software foundations, QA, Playwright, APIs, CI/CD and AI-assisted testing.</small></span></label><label className={`learning-path-option ${value === "genai-agentic-ai" ? "selected" : ""}`}><input type="radio" name="learning_path" value="genai-agentic-ai" checked={value === "genai-agentic-ai"} onChange={() => onChange("genai-agentic-ai")} /><span><strong>B. GenAI + AI Agents</strong><small>Continue with the existing GenAI, agent engineering, RAG and evaluation curriculum.</small></span></label></fieldset>; }
